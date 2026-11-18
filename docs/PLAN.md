@@ -396,9 +396,9 @@ All phases below are pending authorization and implementation; they are not clai
 
 Target a complete small pilot before thousands of emails per month. The pilot size, thresholds, timeline, and budget are not yet committed. Do not promise guaranteed sales or unattended resolution of every exception.
 
-### 20.1 PROPOSED growth governor (not approved)
+### 20.1 Growth governor (jumpstart approved; remaining numbers proposed)
 
-- Jumpstart: fixed acquisition budget (proposed $300/month) until 10 paying subscribers or 90 days.
+- Jumpstart (APPROVED Nov 18, 2026): $150/month for email acquisition until 10 paying subscribers or 90 days. Operating costs (hosting, Instantly plan, Twilio, APIs) are tracked separately and count against total spend.
 - After jumpstart: monthly acquisition spend <= 30% of trailing-30-day collected revenue.
 - Acquisition spend covers cold email infrastructure and data, plus retargeting. Proposed split once retargeting is live: up to 70% cold email/data, up to 30% retargeting; the strategy agent may shift within the cap based on measured cost per customer.
 - Retargeting channels: paid ads (Meta, Google) to roofers who opened a preview or the audit page (pixel on preview/opt-in pages, disclosed); free email follow-up within the approved sequence; SMS only to people with recorded consent. Each retargeting campaign has its own budget, frequency cap, and stop rules (purchase, opt-out, rejection).
@@ -437,6 +437,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 18, 2026 | Approved $150/month email jumpstart budget; main brand domain rooflinewebsites.com approved. |
 | November 18, 2026 | Confirmed niche-hopping growth model and 100k+/month email goal (5.1). |
 | November 18, 2026 | Approved and locked the no-website email variant (6.1). Confirmed continuous outreach improvement through approved, controlled experiments measured on purchases and retention. Implementation authorized and under way; see STATUS.md. |
 | November 17, 2026 | Consolidated subsequent decisions into this living plan: $150 website, $200 SMS, unified $500 marketing; niche-specific main-site switching; agent roles, audit/email/SMS/preview journey, review queues, value reporting, domain connection, customer operations, roadmap, and planning-only Claude handoff. Locked exact approved email and removed “Want to see it?”; made its prebuilt-preview requirement explicit. |
