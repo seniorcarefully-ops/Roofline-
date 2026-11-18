@@ -33,7 +33,7 @@ async function makeSendable(id: number) {
   for (const s of ["build_queued", "building", "reviewing", "approved", "ready_to_send"])
     await transition(pool, id, "website_state", s, "test");
   const pv = await pool.query(
-    `INSERT INTO previews(prospect_id, version, content_hash) VALUES ($1, 1, 'h') RETURNING id`, [id]);
+    `INSERT INTO previews(prospect_id, version, content_hash, token) VALUES ($1, 1, 'h', 'tok' || $1) RETURNING id`, [id]);
   await pool.query(`INSERT INTO reviews(preview_id, verdict, checks, reviewer) VALUES ($1,'approved','{}','reviewer')`,
     [pv.rows[0].id]);
   await pool.query(`INSERT INTO audit_documents(prospect_id, file_path, sha256) VALUES ($1,'a.pdf','x')`, [id]);
@@ -180,7 +180,7 @@ describe("no-website email", () => {
     await pool.query(`UPDATE settings SET outreach_paused=false`);
     await transition(pool, id, "prospect_state", "qualified", "t");
     for (const s of ["build_queued", "building", "reviewing", "approved", "ready_to_send"]) await transition(pool, id, "website_state", s, "t");
-    const pv = await pool.query(`INSERT INTO previews(prospect_id, version, content_hash) VALUES ($1,1,'h') RETURNING id`, [id]);
+    const pv = await pool.query(`INSERT INTO previews(prospect_id, version, content_hash, token) VALUES ($1,1,'h','tok' || $1) RETURNING id`, [id]);
     await pool.query(`INSERT INTO reviews(preview_id, verdict, checks, reviewer) VALUES ($1,'approved','{}','r')`, [pv.rows[0].id]);
     g = await checkInitialEmailGate(pool, id);
     expect(g).toMatchObject({ ok: true, template: "no_website" });
