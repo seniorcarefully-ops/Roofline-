@@ -19,7 +19,7 @@ Not yet: owner dashboard/auth, hosting, deployment.
 |---|---|
 | GitHub repo | Connected |
 | Cloud environment `roofline` | Created; allows Anthropic, Stripe, Twilio, Instantly, Google Places |
-| Google Places | Waiting on account + key |
+| Google Places | Live: test search returned real results 2026-11-18 (key stored as network secret, header X-Goog-Api-Key) |
 | Stripe | Waiting on account (existing entity + Roofline DBA) |
 | Twilio | Waiting on account; A2P registration needs DBA + address |
 | Instantly + sending domains | Waiting on account/domains |
