@@ -106,6 +106,14 @@ Preserve existing customer sites, subscriptions, previews, old campaign links, c
 
 Brand names, domains, and visual identities have not been selected. Names used in an earlier exploratory draft are not approved business names. Niche focus does not authorize invented specialization history, testimonials, or exclusivity claims.
 
+### 5.1 Niche-hopping growth model (confirmed November 18, 2026)
+
+The engine runs one niche at a time through the same repeatable playbook: configure niche → discover → audit → build → review → outreach → measure. When a niche is proven and its addressable market is being exhausted, the engine moves to the next small-business niche and repeats. Volume goal: 100,000+ cold emails/month across niches.
+
+Planning assumptions (to be replaced with measured Stage 1 data): roofing supports roughly 10,000–20,000 emails/month for its first year (about 30,000–50,000 reachable prospects, one sequence each). Planning conversion: 0.2% of emails to paid customers; 0.5% stretch.
+
+Proposal, not yet decided: run proven niches in parallel rather than strictly in sequence, each under its own niche brand, domain and sending domains, so earlier niches keep producing while new ones ramp.
+
 ## 6. LOCKED: initial cold email
 
 Preserve this exact subject and body unless Micah explicitly approves a revision. Populate placeholders only with verified information. Do not reintroduce “Want to see it?”
@@ -399,6 +407,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 18, 2026 | Confirmed niche-hopping growth model and 100k+/month email goal (5.1). |
 | November 18, 2026 | Approved and locked the no-website email variant (6.1). Confirmed continuous outreach improvement through approved, controlled experiments measured on purchases and retention. Implementation authorized and under way; see STATUS.md. |
 | November 17, 2026 | Consolidated subsequent decisions into this living plan: $150 website, $200 SMS, unified $500 marketing; niche-specific main-site switching; agent roles, audit/email/SMS/preview journey, review queues, value reporting, domain connection, customer operations, roadmap, and planning-only Claude handoff. Locked exact approved email and removed “Want to see it?”; made its prebuilt-preview requirement explicit. |
 
