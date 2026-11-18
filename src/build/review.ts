@@ -32,6 +32,10 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       await page.evaluate(`Promise.race([Promise.all(Array.from(document.images).map(function(i){ return i.complete ? 0 :
         new Promise(function(r){ i.addEventListener("load", r); i.addEventListener("error", r); }); })),
         new Promise(function(r){ setTimeout(r, 15000); })])`);
+      // Retry failed images once (transient network errors), then judge.
+      await page.evaluate(`Promise.all(Array.from(document.images).filter(function(i){ return i.complete && !i.naturalWidth; }).map(function(i){
+        return new Promise(function(r){ i.addEventListener("load", r); i.addEventListener("error", r); setTimeout(r, 15000);
+          var s = i.currentSrc || i.src; i.removeAttribute("srcset"); i.src = s + (s.indexOf("?") < 0 ? "?" : "&") + "retry=1"; }); }))`);
       const m = await page.evaluate(`({
         overflow: document.documentElement.scrollWidth - window.innerWidth,
         title: document.title,

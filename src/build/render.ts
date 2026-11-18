@@ -179,13 +179,21 @@ input:focus,textarea:focus{outline:2px solid var(--accent);border-color:transpar
 footer{padding:44px 0;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px}footer a{color:var(--ink2)}
 footer .cr{flex-basis:100%;font-size:12.5px}footer .cr a{color:var(--muted)}
-#rl-bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:50;background:rgba(10,14,22,.94);backdrop-filter:blur(10px);color:#e5e7eb;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-#rl-bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;font-size:14.5px;padding:0 10px 0 18px}
-#rl-bar b{color:#fff}#rl-bar .btn{background:${esc(brand.colors.accent)};padding:11px 20px;white-space:nowrap;font-size:15px}
+#rl-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:50;background:#0b0f17;color:#e5e7eb;border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.08);overflow:hidden}
+#rl-bar::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,${esc(brand.colors.accent)},#f6b13b)}
+#rl-bar .wrap{position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:92px;padding:14px 16px 14px 26px}
+#rl-bar .tag{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0b0f17;background:#f6b13b;border-radius:999px;padding:3px 10px;margin-bottom:6px}
+#rl-bar .t{display:block;font:700 19px/1.25 "Inter Tight",Inter,sans-serif;color:#fff;letter-spacing:-.01em}
+#rl-bar .p{display:block;font-size:14.5px;color:rgba(255,255,255,.7);margin-top:2px}#rl-bar .p b{font:800 18px "Inter Tight",Inter,sans-serif;color:#fff}
+#rl-bar .btn{background:${esc(brand.colors.accent)};padding:18px 30px;white-space:nowrap;font-size:18px;font-weight:700;box-shadow:0 8px 24px rgba(226,86,27,.45);animation:rlpulse 2.4s ease-in-out infinite}
+#rl-bar .btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+@keyframes rlpulse{0%,100%{box-shadow:0 8px 24px rgba(226,86,27,.45)}50%{box-shadow:0 8px 34px rgba(226,86,27,.8)}}
+@media (prefers-reduced-motion:reduce){#rl-bar .btn{animation:none}}
+body{padding-bottom:130px}
 @media (max-width:900px){nav{display:none}.hero .wrap,.head,.split,.area,.final .wrap{grid-template-columns:1fr}.badge{justify-self:start}.head p{justify-self:start}
 .steps{grid-template-columns:1fr}section{padding:80px 0}.split{gap:36px}.split .ph{aspect-ratio:4/3}.final .wrap{gap:36px}}
 @media (max-width:520px){.wrap{padding:0 18px}.hero .wrap{padding-top:120px;padding-bottom:40px}.cta .btn{width:100%}header .btn{padding:10px 16px}
-.badge{display:none}.card{min-height:340px}#rl-bar{left:8px;right:8px;bottom:8px}#rl-bar .wrap{font-size:12.5px;padding:0 6px 0 14px}#rl-bar .hide-sm{display:none}}
+.badge{display:none}.card{min-height:340px}#rl-bar{left:8px;right:8px;bottom:8px;border-radius:18px}#rl-bar .wrap{flex-direction:column;align-items:stretch;gap:12px;padding:14px}#rl-bar .t{font-size:16.5px}#rl-bar .hide-sm{display:none}#rl-bar .btn{width:100%;padding:16px}body{padding-bottom:190px}}
 </style></head>
 <body>
 <header><div class="wrap">
@@ -248,8 +256,9 @@ ${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
 <footer><div class="wrap"><span>© ${new Date().getFullYear()} ${name}${lic ? ` · WA contractor license #${esc(lic.number)}` : ""}</span>${tel ? `<a href="${tel}">${phone}</a>` : ""}
 <span class="cr">Photos: ${credits.filter((p, i, a) => a.findIndex((q) => q.author === p.author) === i).map((p) => `<a href="${esc(p.authorUrl)}?utm_source=roofline&amp;utm_medium=referral" rel="noopener">${esc(p.author)}</a>`).join(", ")} on <a href="https://unsplash.com/?utm_source=roofline&amp;utm_medium=referral" rel="noopener">Unsplash</a></span></div></footer>
 <aside id="rl-bar" aria-label="${esc(brand.name)} preview"><div class="wrap">
-<span><b>Your new site, by ${esc(brand.name)}.</b> $150/month<span class="hide-sm"> · no setup fee · cancel anytime · free edits</span></span>
-<a class="btn" href="${esc(opts.purchaseUrl)}">Get this site</a>
+<div><span class="tag">Preview · built for you</span><span class="t">This website is ready for ${name}.</span>
+<span class="p"><b>$150/month</b> · no setup fee · cancel anytime<span class="hide-sm"> · free edits</span></span></div>
+<a class="btn" href="${esc(opts.purchaseUrl)}">Get this site <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
 </div></aside>
 </body></html>`;
 }
