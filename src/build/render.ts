@@ -179,12 +179,14 @@ input:focus,textarea:focus{outline:2px solid var(--accent);border-color:transpar
 footer{padding:44px 0;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px}footer a{color:var(--ink2)}
 footer .cr{flex-basis:100%;font-size:12.5px}footer .cr a{color:var(--muted)}
-#rl-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:50;background:#0b0f17;color:#e5e7eb;border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.08);overflow:hidden}
+#rl-bar{position:fixed;left:16px;right:16px;bottom:16px;z-index:50;background:rgba(11,15,23,.42);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);color:#e5e7eb;border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.16);overflow:hidden}
+#rl-fade{position:fixed;left:0;right:0;bottom:0;height:170px;z-index:49;pointer-events:none;background:linear-gradient(180deg,rgba(11,15,23,0),rgba(11,15,23,.35))}
+#rl-bar .t,#rl-bar .p{text-shadow:0 1px 2px rgba(0,0,0,.35)}
 #rl-bar::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,${esc(brand.colors.accent)},#f6b13b)}
 #rl-bar .wrap{position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:92px;padding:14px 16px 14px 26px}
 #rl-bar .tag{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0b0f17;background:#f6b13b;border-radius:999px;padding:3px 10px;margin-bottom:6px}
 #rl-bar .t{display:block;font:700 19px/1.25 "Inter Tight",Inter,sans-serif;color:#fff;letter-spacing:-.01em}
-#rl-bar .p{display:block;font-size:14.5px;color:rgba(255,255,255,.7);margin-top:2px}#rl-bar .p b{font:800 18px "Inter Tight",Inter,sans-serif;color:#fff}
+#rl-bar .p{display:block;font-size:14.5px;color:rgba(255,255,255,.85);margin-top:2px}#rl-bar .p b{font:800 18px "Inter Tight",Inter,sans-serif;color:#fff}
 #rl-bar .btn{background:${esc(brand.colors.accent)};padding:18px 30px;white-space:nowrap;font-size:18px;font-weight:700;box-shadow:0 8px 24px rgba(226,86,27,.45);animation:rlpulse 2.4s ease-in-out infinite}
 #rl-bar .btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 @keyframes rlpulse{0%,100%{box-shadow:0 8px 24px rgba(226,86,27,.45)}50%{box-shadow:0 8px 34px rgba(226,86,27,.8)}}
@@ -255,6 +257,7 @@ ${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
 </main>
 <footer><div class="wrap"><span>© ${new Date().getFullYear()} ${name}${lic ? ` · WA contractor license #${esc(lic.number)}` : ""}</span>${tel ? `<a href="${tel}">${phone}</a>` : ""}
 <span class="cr">Photos: ${credits.filter((p, i, a) => a.findIndex((q) => q.author === p.author) === i).map((p) => `<a href="${esc(p.authorUrl)}?utm_source=roofline&amp;utm_medium=referral" rel="noopener">${esc(p.author)}</a>`).join(", ")} on <a href="https://unsplash.com/?utm_source=roofline&amp;utm_medium=referral" rel="noopener">Unsplash</a></span></div></footer>
+<div id="rl-fade" aria-hidden="true"></div>
 <aside id="rl-bar" aria-label="${esc(brand.name)} preview"><div class="wrap">
 <div><span class="tag">Preview · built for you</span><span class="t">This website is ready for ${name}.</span>
 <span class="p"><b>$150/month</b> · no setup fee · cancel anytime<span class="hide-sm"> · free edits</span></span></div>
