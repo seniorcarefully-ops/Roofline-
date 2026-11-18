@@ -131,7 +131,7 @@ footer{padding:30px 0 100px;text-align:center;color:var(--muted);font-size:13.5p
 <h1>I built ${c} a new website.</h1>
 <p>${d.template === "website_audit" ? "Below is a short audit of your current site, and the new one I built to fix it." : "It's built from your public business info and ready to see."} Enter your cell and I'll text you the link.</p>
 <a class="btn" href="#get">Text me the preview</a></div>
-<div class="phone"><div class="scr">${d.hasThumb ? `<img src="/s/${d.token}/thumb.png" alt="">` : ""}
+<div class="phone"><div class="scr">${d.hasThumb ? `<img src="/s/${d.token}/thumb.jpg" alt="">` : ""}
 <div class="lock"><i><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i><b>Your new site is ready</b><span>Enter your cell to see it</span></div></div></div>
 </div></div>
 ${audit}

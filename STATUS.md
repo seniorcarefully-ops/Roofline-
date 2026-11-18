@@ -45,6 +45,7 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 
 ## Hosting (Render, workspace "Roofline", region Oregon)
 - Audit + SMS opt-in page /s/<preview token> (the email link): personal hero, blurred phone mockup of the approved preview, up to 3 findings with evidence screenshots (stored in DB), cell + explicit consent checkbox; consent stored verbatim with source. Until Twilio is configured, the page shows the preview link immediately instead of promising a text. Verified locally end to end (Barton Roofing).
+- Heavy jobs (audit, build) run as Render one-off jobs on plan-srv-008 (larger, billed per second); Starter (512 MB) runs out of memory with Chromium. Live run 2026-11-18: 36 audited, 4 qualified, 6 unreachable; Barton Roofing preview + opt-in page live with 3 evidenced findings.
 - `niche-refresh` moves not-yet-contacted prospects onto the latest niche config (fixes new audit checks being ignored for older records).
 - Branded system pages (checkout success with business summary + next steps, canceled with link back to preview, already purchased, not found, error) live 2026-11-18. Purchases open an onboarding exception for the owner until onboarding is automated.
 - Render auto-deploy on push is not firing (autoDeploy=yes); deploys are triggered via the Render API after pushes.

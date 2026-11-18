@@ -51,10 +51,10 @@ export async function buildAndReview(pool: pg.Pool, prospectId: number) {
       const { pathToFileURL } = await import("node:url");
       const b = await launchBrowser();
       try {
-        const pg2 = await (await b.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 2 })).newPage();
+        const pg2 = await (await b.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 1 })).newPage();
         await pg2.goto(pathToFileURL(out.path).href, { waitUntil: "networkidle", timeout: 20000 }).catch(() => {});
         await pg2.addStyleTag({ content: "#rl-bar{display:none!important}" });
-        const png = await pg2.screenshot({ type: "png" });
+        const png = await pg2.screenshot({ type: "jpeg", quality: 60 }); // shown blurred; keep it light
         await pool.query(`UPDATE previews SET thumb = $2 WHERE id = $1`, [pv.rows[0].id, png]);
       } finally { await b.close(); }
     } catch (e) { console.error("thumbnail failed:", e instanceof Error ? e.message : e); }

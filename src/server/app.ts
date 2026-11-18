@@ -56,12 +56,12 @@ export function createApp(pool: pg.Pool) {
       if (req.method === "GET" && url.pathname === "/healthz") return send(res, 200, "ok", "text/plain");
 
       // Audit + SMS opt-in page (the link in the email).
-      const s = url.pathname.match(/^\/s\/([A-Za-z0-9_-]{16,64})(?:\/(optin|thumb\.png|img\/([A-Za-z0-9._-]{1,80})))?\/?$/);
+      const s = url.pathname.match(/^\/s\/([A-Za-z0-9_-]{16,64})(?:\/(optin|thumb\.jpg|img\/([A-Za-z0-9._-]{1,80})))?\/?$/);
       if (s) {
         const token = s[1]!;
-        if (req.method === "GET" && s[2] === "thumb.png") {
+        if (req.method === "GET" && s[2] === "thumb.jpg") {
           const r = await pool.query(`SELECT thumb FROM previews WHERE token = $1 AND thumb IS NOT NULL`, [token]);
-          return r.rowCount ? send(res, 200, r.rows[0].thumb, "image/png", { "Cache-Control": "private, max-age=3600" }) : send(res, 404, "", "text/plain");
+          return r.rowCount ? send(res, 200, r.rows[0].thumb, "image/jpeg", { "Cache-Control": "private, max-age=3600" }) : send(res, 404, "", "text/plain");
         }
         if (req.method === "GET" && s[3]) {
           const r = await pool.query(`SELECT e.png FROM evidence_images e JOIN previews pv ON pv.prospect_id = e.prospect_id
