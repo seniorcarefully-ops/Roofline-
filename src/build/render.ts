@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { NicheConfig } from "../niches/schema.js";
 import { BuildBrief } from "./brief.js";
+import { photoUrl, pickPhoto, serviceTag, type Photo } from "./photos.js";
 import { MIN_RATING_FOR_REVIEWS, type LiveReviews } from "./reviews.js";
 
 const esc = (s: string) =>
@@ -10,28 +11,8 @@ const esc = (s: string) =>
 
 const STAR = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg>`;
 const stars = (n: number) => `<span class="stars" aria-label="${n} out of 5 stars">${STAR.repeat(Math.round(n))}</span>`;
-
-const ICONS: Record<string, string> = {
-  repair: `<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>`,
-  replace: `<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>`,
-  default: `<path d="M3 12l9-8 9 8"/><path d="M6 10v10h12V10"/>`,
-};
-const icon = (name: string) => {
-  const k = /repair/i.test(name) ? "repair" : /replace/i.test(name) ? "replace" : "default";
-  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg>`;
-};
-
-/** Brand-neutral hero illustration: our own artwork, never presented as the roofer's work. */
-const HERO_ART = `<svg class="art" viewBox="0 0 600 360" aria-hidden="true" preserveAspectRatio="xMidYMax slice">
-<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2533"/><stop offset="1" stop-color="#2d3b50"/></linearGradient>
-<linearGradient id="roofA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a4a61"/><stop offset="1" stop-color="#25303f"/></linearGradient></defs>
-<rect width="600" height="360" fill="url(#sky)"/>
-<circle cx="480" cy="90" r="46" fill="#f59e0b" opacity=".18"/>
-<polygon points="40,250 210,120 380,250" fill="url(#roofA)"/><polygon points="230,250 400,95 570,250" fill="#33435a"/>
-<g stroke="#4b5d78" stroke-width="2" opacity=".55">${Array.from({ length: 9 }, (_, i) => `<line x1="${250 + i * 17}" y1="${232 - i * 15.5}" x2="${550 - i * 17}" y2="${232 - i * 15.5}"/>`).join("")}</g>
-<rect x="70" y="250" width="280" height="110" fill="#202a38"/><rect x="260" y="250" width="280" height="110" fill="#1d2633"/>
-<rect x="110" y="282" width="46" height="40" rx="3" fill="#f59e0b" opacity=".35"/><rect x="300" y="282" width="46" height="40" rx="3" fill="#f59e0b" opacity=".25"/>
-<rect x="440" y="282" width="46" height="40" rx="3" fill="#f59e0b" opacity=".3"/></svg>`;
+const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const PHONE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>`;
 
 export interface RenderOptions {
   purchaseUrl: string;
@@ -39,9 +20,10 @@ export interface RenderOptions {
 }
 
 /**
- * "Ridge" one-page roofing site. Complete sections; every statement is either a
- * verified fact from the brief or a general statement that makes no claim.
- * Preview safeguards: noindex, preview-only form, separate purchase bar.
+ * "Ridge" premium one-page roofing site. Complete sections; every statement is
+ * either a verified fact from the brief or a general statement that makes no claim.
+ * Photos come from the licensed Roofline library and are never captioned as the
+ * roofer's own work. Preview safeguards: noindex, preview-only form, purchase bar.
  */
 export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts: RenderOptions): string {
   const b = BuildBrief.parse(input);
@@ -49,48 +31,55 @@ export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts
   const tel = b.phoneE164 ? `tel:${b.phoneE164}` : null;
   const phone = esc(b.phone ?? "");
   const city = b.city ? esc(b.city) : null;
+  const cityShort = b.city ? esc(b.city.split(",")[0]!) : null;
   const rating = opts.live?.rating ?? b.rating;
   const count = opts.live?.count ?? b.reviewCount;
   const showReviews = !!rating && rating >= MIN_RATING_FOR_REVIEWS && !!count;
   const mapsUrl = opts.live?.mapsUrl ?? b.googleMapsUrl;
+  const lic = b.license;
+  const licWords = lic ? ["Licensed", lic.bonded ? "bonded" : null, lic.insured ? "insured" : null].filter(Boolean).join(", ").replace(/, ([^,]*)$/, " & $1") : null;
 
-  const trust: string[] = [];
-  if (showReviews) trust.push(`${stars(rating!)}<span><b>${rating!.toFixed(1)}</b> from ${count} Google reviews</span>`);
-  if (b.license) {
-    const parts = ["Licensed", b.license.bonded ? "bonded" : null, b.license.insured ? "insured" : null].filter(Boolean);
-    trust.push(`<span><b>${parts.join(", ").replace(/, ([^,]*)$/, " & $1")}</b> · WA #${esc(b.license.number)}</span>`);
-  }
-  if (city) trust.push(`<span>Local to <b>${city}</b></span>`);
+  const seed = b.placeId ?? b.businessName;
+  const used = new Set<string>();
+  const take = (tag: string) => { const p = pickPhoto(tag, seed, used) ?? pickPhoto("shingles", seed, used); if (p) used.add(p.id); return p; };
+  const hero = take("hero");
+  const about = take("home");
+  const ctaBg = take("shingles");
+  const svc = b.services.map((s) => ({ s, p: take(serviceTag(s)) }));
+  const credits = [hero, about, ctaBg, ...svc.map((x) => x.p)].filter((p): p is Photo => !!p);
+  const img = (p: Photo | null, w: number, h: number, cls = "", lazy = true) => p
+    ? `<img class="${cls}" src="${esc(photoUrl(p, w, h))}" srcset="${esc(photoUrl(p, Math.round(w / 2), Math.round(h / 2)))} ${Math.round(w / 2)}w, ${esc(photoUrl(p, w, h))} ${w}w" sizes="(max-width: 700px) 100vw, ${w}px" alt=""${lazy ? ` loading="lazy"` : ` fetchpriority="high"`} decoding="async">`
+    : "";
 
-  const why: [string, string][] = [];
-  if (showReviews) why.push(["Rated by real customers", `${rating!.toFixed(1)} stars across ${count} reviews on Google.`]);
-  if (b.license) why.push([`Licensed${b.license.bonded ? " & bonded" : ""}${b.license.insured ? " & insured" : ""}`,
-    `Washington contractor license #${esc(b.license.number)}, verifiable with L&amp;I.`]);
-  if (city) why.push(["Local", `Based in ${city}, close to the homes we work on.`]);
-  why.push(["Straight answers", "Call and talk to a person about your roof and what it needs."]);
+  const stats: [string, string][] = [];
+  if (showReviews) stats.push([rating!.toFixed(1), `Google rating`], [String(count), `Google reviews`]);
+  if (lic?.since) stats.push([String(lic.since), "WA licensed since"]);
+  if (lic && !lic.since) stats.push(["WA", "Licensed contractor"]);
+  if (cityShort) stats.push([cityShort, "Local roofer"]);
+
+  const why: string[] = [];
+  if (showReviews) why.push(`Rated ${rating!.toFixed(1)} stars by ${count} customers on Google`);
+  if (lic) why.push(`${licWords} · Washington license #${esc(lic.number)}`);
+  if (lic?.since) why.push(`Licensed in Washington since ${lic.since}`);
+  if (city) why.push(`Based in ${city}`);
+  why.push("Straight answers and a clear estimate before work starts");
 
   const reviewCards = showReviews && opts.live?.reviews.length
-    ? opts.live.reviews.slice(0, 3).map((r) => `<figure class="rev">${stars(r.rating)}<blockquote>${esc(r.text.length > 320 ? r.text.slice(0, 317).trimEnd() + "…" : r.text)}</blockquote>
-<figcaption>${r.authorUrl ? `<a href="${esc(r.authorUrl)}" rel="noopener nofollow">${esc(r.author)}</a>` : esc(r.author)}${r.when ? ` · ${esc(r.when)}` : ""}</figcaption></figure>`).join("")
+    ? opts.live.reviews.slice(0, 3).map((r) => `<figure class="rev">${stars(r.rating)}<blockquote>“${esc(r.text.length > 300 ? r.text.slice(0, 297).trimEnd() + "…" : r.text)}”</blockquote>
+<figcaption>${r.photo ? `<img src="${esc(r.photo)}" alt="" width="36" height="36" loading="lazy" referrerpolicy="no-referrer">` : `<span class="av">${esc(r.author.slice(0, 1))}</span>`}<span>${r.authorUrl ? `<a href="${esc(r.authorUrl)}" rel="noopener nofollow">${esc(r.author)}</a>` : esc(r.author)}<small>${esc(r.when)} · Google</small></span></figcaption></figure>`).join("")
     : "";
-  const reviewsSection = showReviews ? `<section id="reviews"><div class="wrap">
-<div class="sec-head"><h2>What customers say</h2><p class="big-rating">${stars(rating!)} <b>${rating!.toFixed(1)}</b> · ${count} Google reviews</p></div>
-${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
-<p class="attr">Reviews from Google${mapsUrl ? ` · <a href="${esc(mapsUrl)}" rel="noopener">See all reviews on Google</a>` : ""}</p>
-</div></section>` : "";
 
-  const services = b.services.map((s) => `<li>${icon(s)}<h3>${esc(s)}</h3></li>`).join("");
   const area = b.serviceArea.length ? `Serving ${esc(b.serviceArea.join(", "))}.` : city ? `Based in ${city}. Call to confirm we cover your address.` : "Call to confirm we cover your address.";
   const mapQ = encodeURIComponent(`${b.businessName}${b.city ? ", " + b.city : ""}`);
-  const hours = b.hours?.length ? `<div class="card"><h3>Hours</h3><ul class="hours">${b.hours.map((h) => {
-    const [d, ...t] = h.split(": "); return `<li><span>${esc(d ?? "")}</span><span>${esc(t.join(": "))}</span></li>`; }).join("")}</ul></div>` : "";
-  const callBtn = (cls = "btn") => (tel ? `<a class="${cls}" href="${tel}">Call ${phone}</a>` : "");
+  const hours = b.hours?.length ? `<ul class="hours">${b.hours.map((h) => {
+    const [d, ...t] = h.split(": "); return `<li><span>${esc(d ?? "")}</span><span>${esc(t.join(": ").replace(/ | /g, " "))}</span></li>`; }).join("")}</ul>` : "";
 
   const faqs: [string, string][] = [
     ["How do I get an estimate?", tel ? `Call ${phone} or send a request with the form on this page.` : "Send a request with the form on this page."],
     ["Do you work in my area?", area],
+    ...(lic ? [["Are you licensed?", `Yes. Washington contractor license #${esc(lic.number)}${lic.bonded && lic.insured ? ", bonded and insured" : ""}. You can verify it with Washington L&amp;I.`] as [string, string]] : []),
     ...(b.hours?.length ? [["When can I reach you?", "Our hours are listed on this page. Leave a message after hours and we'll get back to you."] as [string, string]] : []),
-    ...(b.license ? [["Are you licensed?", `Yes. Washington contractor license #${esc(b.license.number)}${b.license.bonded && b.license.insured ? ", bonded and insured" : ""}.`] as [string, string]] : []),
+    ["What happens after I reach out?", "We'll talk through what you're seeing, take a look, and give you a clear estimate before any work starts."],
   ];
 
   return `<!doctype html>
@@ -98,127 +87,168 @@ ${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>${name}${city ? ` | Roofing in ${city}` : " | Roofing"}</title>
-<meta name="description" content="${name}: roofing${city ? ` in ${city}` : ""}. Call ${phone} for an estimate.">
+<meta name="description" content="${name}: roofing${city ? ` in ${city}` : ""}.${phone ? ` Call ${phone} for an estimate.` : ""}">
+<meta name="theme-color" content="#0f1621">
+${hero ? `<link rel="preload" as="image" href="${esc(photoUrl(hero, 1800, 1100))}">` : ""}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#111827;--ink2:#374151;--muted:#6b7280;--line:#e5e7eb;--soft:#f6f7f9;--navy:#1b2533;--accent:#d9480f;--accent2:#b93c0b;--gold:#f59e0b}
+:root{--ink:#0f1621;--ink2:#3b4452;--muted:#6b7380;--line:#e7e9ee;--soft:#f5f6f8;--night:#0f1621;--accent:#e2561b;--accent2:#c74813;--gold:#f6b13b;--r:20px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;font:16.5px/1.6 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:#fff;padding-bottom:76px;-webkit-font-smoothing:antialiased}
-a{color:var(--accent)}h1,h2,h3{letter-spacing:-.02em;line-height:1.15;margin:0}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:10px;border:0;font-size:16px;cursor:pointer;transition:background .15s}
-.btn:hover{background:var(--accent2)}.btn.ghost{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.5)}
-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;color:var(--ink);text-decoration:none;min-width:0}
-.logo svg{flex:none;width:30px;height:30px}.logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-nav{display:flex;gap:22px;font-weight:600;font-size:15px}nav a{color:var(--ink2);text-decoration:none}
-header .btn{padding:10px 16px;white-space:nowrap}
-.hero{position:relative;color:#fff;background:var(--navy);overflow:hidden}
-.hero .art{position:absolute;inset:0;width:100%;height:100%}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(17,24,39,.92) 0%,rgba(17,24,39,.75) 55%,rgba(17,24,39,.35) 100%)}
-.hero .wrap{position:relative;z-index:1;padding-top:84px;padding-bottom:84px}
-.eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fbbf8a;margin-bottom:14px}
-.hero h1{font-size:clamp(34px,6vw,58px);max-width:15ch;margin-bottom:16px}
-.hero p.lead{font-size:clamp(17px,2.2vw,20px);color:#d1d5db;max-width:34em;margin:0 0 28px}
+body{margin:0;font:16.5px/1.65 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:#fff;padding-bottom:72px;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}img{max-width:100%;display:block}
+h1,h2,h3{font-family:"Inter Tight",Inter,system-ui,sans-serif;letter-spacing:-.025em;line-height:1.05;margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.kicker{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.kicker::before{content:"";width:28px;height:2px;background:currentColor}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;padding:16px 26px;border-radius:999px;border:0;font-size:16px;cursor:pointer;transition:background .2s,transform .2s}
+.btn:hover{background:var(--accent2);transform:translateY(-1px)}.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.btn.light{background:#fff;color:var(--ink)}.btn.line{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55)}
+.btn.line:hover{background:rgba(255,255,255,.1)}
+header{position:absolute;top:0;left:0;right:0;z-index:20;color:#fff}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:84px}
+.logo{display:flex;align-items:center;gap:12px;font:700 19px "Inter Tight",Inter,sans-serif;letter-spacing:-.01em;color:inherit;text-decoration:none;min-width:0}
+.logo i{flex:none;width:38px;height:38px;border-radius:11px;background:var(--accent);display:grid;place-items:center}
+.logo i svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav{display:flex;gap:30px;font-size:15px;font-weight:500}nav a{color:rgba(255,255,255,.85);text-decoration:none}nav a:hover{color:#fff}
+header .btn{padding:12px 20px;font-size:15px}
+.hero{position:relative;min-height:min(860px,100svh);display:flex;align-items:flex-end;color:#fff;background:var(--night);overflow:hidden}
+.hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.03)}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,22,33,.55) 0%,rgba(15,22,33,.15) 35%,rgba(15,22,33,.85) 100%),linear-gradient(90deg,rgba(15,22,33,.7),rgba(15,22,33,0) 70%)}
+.hero .wrap{position:relative;z-index:1;width:100%;padding-top:160px;padding-bottom:72px;display:grid;grid-template-columns:1.4fr 1fr;gap:40px;align-items:end}
+.hero .kicker{color:#ffb38a}
+.hero h1{font-size:clamp(44px,7.4vw,96px);margin:18px 0 22px;max-width:11ch}
+.hero p{font-size:clamp(17px,1.6vw,20px);color:rgba(255,255,255,.82);max-width:32em;margin:0 0 32px}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
-.trust{background:#fff;border-bottom:1px solid var(--line)}
-.trust .wrap{display:flex;flex-wrap:wrap;gap:12px 32px;padding-top:18px;padding-bottom:18px;font-size:15px;color:var(--ink2)}
-.trust .wrap>div{display:flex;align-items:center;gap:8px}
-.stars{display:inline-flex;gap:2px;vertical-align:middle}.stars svg{width:17px;height:17px;fill:var(--gold)}
-section{padding:80px 0}.soft{background:var(--soft)}
-.sec-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px;margin-bottom:32px}
-.sec-head h2{font-size:clamp(28px,4vw,38px)}.sec-head p{margin:0;color:var(--muted);max-width:36em}
-.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;list-style:none;padding:0;margin:0}
-.svc li{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px;transition:box-shadow .2s,transform .2s}
-.svc li:hover{box-shadow:0 12px 30px rgba(17,24,39,.08);transform:translateY(-2px)}
-.ico{width:44px;height:44px;padding:10px;border-radius:12px;background:#fff1ea;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:16px}
-.svc h3{font-size:20px}
-.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px}
-.why div{border-top:3px solid var(--accent);padding-top:18px}.why h3{font-size:18px;margin-bottom:6px}.why p{margin:0;color:var(--ink2)}
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;counter-reset:s;list-style:none;padding:0;margin:0}
-.steps li{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;counter-increment:s}
-.steps li::before{content:counter(s);display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;margin-bottom:14px}
-.steps h3{font-size:18px;margin-bottom:6px}.steps p{margin:0;color:var(--ink2)}
-.revs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
-.rev{margin:0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
-.rev blockquote{margin:0;color:var(--ink2)}.rev figcaption{font-size:14px;color:var(--muted);font-weight:600}.rev figcaption a{color:inherit}
-.big-rating{display:flex;align-items:center;gap:8px;font-size:17px}.attr{margin-top:18px;font-size:14px;color:var(--muted)}
-.two{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:start}
-.map{width:100%;height:340px;border:0;border-radius:16px;background:#e5e7eb}
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}.card h3{font-size:18px;margin-bottom:12px}
-.hours{list-style:none;margin:0;padding:0}.hours li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #eef0f3;font-size:15px}
-.hours li:last-child{border:0}
-details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:12px}
-summary{font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px}summary::after{content:"+";color:var(--accent);font-size:22px;line-height:1}
-details[open] summary::after{content:"–"}details p{margin:12px 0 0;color:var(--ink2)}
-.estimate{background:var(--navy);color:#fff;border-radius:24px;padding:48px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
-.estimate h2{font-size:clamp(28px,4vw,38px);margin-bottom:12px}.estimate p{color:#cbd5e1}
-form{display:grid;gap:12px}input,textarea{font:inherit;padding:14px 16px;border:1px solid #334155;border-radius:10px;background:#0f1724;color:#fff}
-input::placeholder,textarea::placeholder{color:#94a3b8}.note{font-size:14px;color:#94a3b8;margin:0}
-footer{padding:40px 0;color:var(--muted);font-size:14px}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
-#rl-bar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#0b0f17;color:#e5e7eb;border-top:3px solid ${esc(brand.colors.accent)}}
-#rl-bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;font-size:14.5px}
-#rl-bar b{color:#fff}#rl-bar .btn{background:${esc(brand.colors.accent)};padding:11px 18px;white-space:nowrap;font-size:15px}
-@media (max-width:820px){nav{display:none}.two,.estimate{grid-template-columns:1fr}.estimate{padding:32px 22px}section{padding:60px 0}
-.hero .wrap{padding-top:64px;padding-bottom:64px}.hero::after{background:linear-gradient(180deg,rgba(17,24,39,.88),rgba(17,24,39,.8))}}
-@media (max-width:480px){#rl-bar .wrap{font-size:12.5px}#rl-bar .hide-sm{display:none}.cta .btn{width:100%}}
+.badge{justify-self:end;background:rgba(255,255,255,.1);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.18);border-radius:var(--r);padding:22px 24px;max-width:320px}
+.badge .big{font:800 44px/1 "Inter Tight",sans-serif;display:flex;align-items:center;gap:12px}
+.badge p{font-size:14.5px;margin:10px 0 0;color:rgba(255,255,255,.8)}
+.stars{display:inline-flex;gap:3px}.stars svg{width:18px;height:18px;fill:var(--gold)}
+.stats{background:var(--night);color:#fff}
+.stats .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));border-top:1px solid rgba(255,255,255,.1)}
+.stats div{padding:34px 24px 34px 0}.stats b{display:block;font:800 clamp(30px,3.6vw,44px)/1 "Inter Tight",sans-serif;letter-spacing:-.03em}
+.stats span{display:block;margin-top:8px;font-size:14px;color:rgba(255,255,255,.62);text-transform:uppercase;letter-spacing:.08em}
+section{padding:112px 0}.soft{background:var(--soft)}
+.head{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end;margin-bottom:52px}
+.head h2{font-size:clamp(34px,4.6vw,58px);margin-top:16px}.head p{margin:0;color:var(--ink2);font-size:18px;max-width:30em;justify-self:end}
+.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.card{position:relative;border-radius:var(--r);overflow:hidden;min-height:420px;display:flex;align-items:flex-end;color:#fff;background:#222}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.card:hover img{transform:scale(1.05)}
+.card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,22,33,0) 35%,rgba(15,22,33,.88))}
+.card div{position:relative;z-index:1;padding:28px}.card h3{font-size:30px}.card p{margin:8px 0 0;color:rgba(255,255,255,.8)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.split .ph{border-radius:var(--r);overflow:hidden;aspect-ratio:4/5}.split .ph img{width:100%;height:100%;object-fit:cover}
+.split h2{font-size:clamp(34px,4.4vw,54px);margin:16px 0 22px}
+.ticks{list-style:none;padding:0;margin:28px 0 36px;display:grid;gap:16px}
+.ticks li{display:flex;gap:14px;align-items:flex-start;font-size:17px;font-weight:500}
+.ticks svg{flex:none;width:26px;height:26px;padding:4px;border-radius:50%;background:#fdebe2;fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.dark{background:var(--night);color:#fff}.dark .head p{color:rgba(255,255,255,.7)}
+.revs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.rev{margin:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:30px;display:flex;flex-direction:column;gap:18px}
+.rev blockquote{margin:0;font-size:17px;line-height:1.6;color:rgba(255,255,255,.9);flex:1}
+.rev figcaption{display:flex;align-items:center;gap:12px;font-weight:600}.rev figcaption img,.av{width:36px;height:36px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-weight:700}
+.rev figcaption a{color:#fff;text-decoration:none}.rev small{display:block;font-weight:400;font-size:13px;color:rgba(255,255,255,.55)}
+.attr{margin-top:28px;font-size:14px;color:rgba(255,255,255,.6)}.attr a{color:#fff}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;padding-top:28px;border-top:2px solid var(--ink)}
+.steps li::before{content:"0" counter(s);font:800 15px "Inter Tight",sans-serif;color:var(--accent);letter-spacing:.06em}
+.steps h3{font-size:26px;margin:14px 0 10px}.steps p{margin:0;color:var(--ink2)}
+.area{display:grid;grid-template-columns:1.5fr 1fr;gap:24px}
+.map{width:100%;height:100%;min-height:420px;border:0;border-radius:var(--r);background:#e8eaee}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:30px}
+.panel h3{font-size:22px;margin-bottom:14px}
+.hours{list-style:none;margin:0 0 24px;padding:0}.hours li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.hours li span:first-child{font-weight:600}
+.faq{max-width:860px}
+details{border-bottom:1px solid var(--line);padding:24px 0}
+summary{font:600 20px "Inter Tight",Inter,sans-serif;letter-spacing:-.01em;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";flex:none;width:28px;height:28px;border-radius:50%;background:var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2561b' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center/16px no-repeat;transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}details p{margin:14px 0 0;color:var(--ink2);font-size:17px}
+.final{position:relative;color:#fff;overflow:hidden;background:var(--night)}
+.final>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35}
+.final .wrap{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.final h2{font-size:clamp(36px,5vw,64px);margin:16px 0 18px}.final p{color:rgba(255,255,255,.78);font-size:18px}
+form{display:grid;gap:12px;background:#fff;border-radius:var(--r);padding:30px;color:var(--ink)}
+form h3{font-size:22px;margin-bottom:4px}
+input,textarea{font:inherit;padding:15px 16px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink)}
+input:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+.note{font-size:13.5px;color:var(--muted);margin:0}
+footer{padding:44px 0;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px}footer a{color:var(--ink2)}
+footer .cr{flex-basis:100%;font-size:12.5px}footer .cr a{color:var(--muted)}
+#rl-bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:50;background:rgba(10,14,22,.94);backdrop-filter:blur(10px);color:#e5e7eb;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#rl-bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;font-size:14.5px;padding:0 10px 0 18px}
+#rl-bar b{color:#fff}#rl-bar .btn{background:${esc(brand.colors.accent)};padding:11px 20px;white-space:nowrap;font-size:15px}
+@media (max-width:900px){nav{display:none}.hero .wrap,.head,.split,.area,.final .wrap{grid-template-columns:1fr}.badge{justify-self:start}.head p{justify-self:start}
+.steps{grid-template-columns:1fr}section{padding:80px 0}.split{gap:36px}.split .ph{aspect-ratio:4/3}.final .wrap{gap:36px}}
+@media (max-width:520px){.wrap{padding:0 18px}.hero .wrap{padding-top:120px;padding-bottom:40px}.cta .btn{width:100%}header .btn{padding:10px 16px}
+.badge{display:none}.card{min-height:340px}#rl-bar{left:8px;right:8px;bottom:8px}#rl-bar .wrap{font-size:12.5px;padding:0 6px 0 14px}#rl-bar .hide-sm{display:none}}
 </style></head>
 <body>
 <header><div class="wrap">
-<a class="logo" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1b2533"/><path d="M6 19l10-9 10 9" stroke="#d9480f" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 18v7h12v-7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linejoin="round"/></svg><span>${name}</span></a>
-<nav><a href="#services">Services</a>${showReviews ? `<a href="#reviews">Reviews</a>` : ""}<a href="#area">Service area</a><a href="#faq">FAQ</a></nav>
-${tel ? `<a class="btn" href="${tel}">Call now</a>` : `<a class="btn" href="#estimate">Get an estimate</a>`}
+<a class="logo" href="#top"><i><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M6 10.5V20h12v-9.5"/></svg></i><span>${name}</span></a>
+<nav><a href="#services">Services</a><a href="#about">About</a>${showReviews ? `<a href="#reviews">Reviews</a>` : ""}<a href="#area">Service area</a><a href="#faq">FAQ</a></nav>
+${tel ? `<a class="btn" href="${tel}">${PHONE}<span>Call</span></a>` : `<a class="btn" href="#estimate">Get an estimate</a>`}
 </div></header>
 <main id="top">
-<div class="hero">${HERO_ART}<div class="wrap">
-<span class="eyebrow">Roofing${city ? ` · ${city}` : ""}</span>
-<h1>${name}</h1>
-<p class="lead">Roofing${city ? ` in ${city}` : ""} with straight answers. Tell us what's going on with your roof and we'll take it from there.</p>
-<div class="cta">${callBtn()}<a class="btn ghost" href="#estimate">Request an estimate</a></div>
+<div class="hero">${img(hero, 1800, 1100, "", false)}<div class="wrap">
+<div><span class="kicker">Roofing${cityShort ? ` · ${cityShort}` : ""}</span>
+<h1>A roof you don't have to think about.</h1>
+<p>${name}${city ? ` works on homes in and around ${city}` : " works on homes in your area"}. Tell us what's going on and we'll take it from there.</p>
+<div class="cta">${tel ? `<a class="btn" href="${tel}">${PHONE}Call ${phone}</a>` : ""}<a class="btn line" href="#estimate">Request an estimate</a></div></div>
+${showReviews ? `<div class="badge"><div class="big">${rating!.toFixed(1)} ${stars(rating!)}</div><p>From ${count} reviews on Google</p></div>` : ""}
 </div></div>
-${trust.length ? `<div class="trust"><div class="wrap">${trust.map((t) => `<div>${t}</div>`).join("")}</div></div>` : ""}
+${stats.length ? `<div class="stats"><div class="wrap">${stats.map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("")}</div></div>` : ""}
 <section id="services"><div class="wrap">
-<div class="sec-head"><h2>Services</h2><p>Have something else in mind? Call and ask.</p></div>
-<ul class="svc">${services}</ul>
+<div class="head"><div><span class="kicker">Services</span><h2>What we do</h2></div><p>Something else on your mind? Call and ask. We'll tell you straight.</p></div>
+<div class="svc">${svc.map(({ s, p }) => `<article class="card">${img(p, 900, 1100)}<div><h3>${esc(s)}</h3></div></article>`).join("")}</div>
 </div></section>
-<section class="soft"><div class="wrap">
-<div class="sec-head"><h2>Why ${name}</h2></div>
-<div class="why">${why.map(([h, p]) => `<div><h3>${h}</h3><p>${p}</p></div>`).join("")}</div>
+<section id="about" class="soft"><div class="wrap split">
+<div class="ph">${img(about, 1000, 1250)}</div>
+<div><span class="kicker">Why ${name}</span><h2>Local, accountable, easy to reach.</h2>
+<ul class="ticks">${why.map((w) => `<li>${CHECK}<span>${w}</span></li>`).join("")}</ul>
+${tel ? `<a class="btn" href="${tel}">${PHONE}Call ${phone}</a>` : `<a class="btn" href="#estimate">Request an estimate</a>`}</div>
 </div></section>
-${reviewsSection}
-<section class="soft"><div class="wrap">
-<div class="sec-head"><h2>How it works</h2></div>
+${showReviews ? `<section id="reviews" class="dark"><div class="wrap">
+<div class="head"><div><span class="kicker">Reviews</span><h2>${rating!.toFixed(1)} stars from ${count} customers</h2></div><p>${stars(rating!)}<br>Real reviews from Google, shown as written.</p></div>
+${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
+<p class="attr">Reviews from Google${mapsUrl ? ` · <a href="${esc(mapsUrl)}" rel="noopener">Read all ${count} reviews on Google</a>` : ""}</p>
+</div></section>` : ""}
+<section><div class="wrap">
+<div class="head"><div><span class="kicker">How it works</span><h2>Three simple steps</h2></div></div>
 <ol class="steps">
 <li><h3>Reach out</h3><p>Call${tel ? ` ${phone}` : ""} or send a request with a few details about your roof.</p></li>
 <li><h3>We take a look</h3><p>We'll talk through what you're seeing and what your roof needs.</p></li>
-<li><h3>Get your estimate</h3><p>You get a clear estimate before any work starts.</p></li>
-</ol>
+<li><h3>Clear estimate</h3><p>You get a clear estimate before any work starts. No pressure.</p></li>
+</ol></div></section>
+<section id="area" class="soft"><div class="wrap">
+<div class="head"><div><span class="kicker">Service area</span><h2>${cityShort ? `Serving ${cityShort} & nearby` : "Where we work"}</h2></div><p>${area}</p></div>
+<div class="area"><iframe class="map" title="Map of ${name}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${mapQ}&amp;z=11&amp;output=embed"></iframe>
+<div class="panel">${hours ? `<h3>Hours</h3>${hours}` : ""}<h3>Talk to us</h3>${tel ? `<a class="btn" href="${tel}" style="width:100%">${PHONE}${phone}</a>` : `<a class="btn" href="#estimate" style="width:100%">Request an estimate</a>`}</div></div>
 </div></section>
-<section id="area"><div class="wrap">
-<div class="sec-head"><h2>Service area</h2><p>${area}</p></div>
-<div class="two"><iframe class="map" title="Map of ${name}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${mapQ}&amp;output=embed"></iframe>
-<div>${hours}${tel ? `<div class="card" style="margin-top:16px"><h3>Call</h3><a class="btn" href="${tel}">${phone}</a></div>` : ""}</div></div>
+<section id="faq"><div class="wrap">
+<div class="head"><div><span class="kicker">FAQ</span><h2>Good questions</h2></div></div>
+<div class="faq">${faqs.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div>
 </div></section>
-<section id="faq" class="soft"><div class="wrap">
-<div class="sec-head"><h2>Questions</h2></div>
-${faqs.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("")}
-</div></section>
-<section id="estimate"><div class="wrap"><div class="estimate">
-<div><h2>Request an estimate</h2><p>Tell us a little about your roof and the best way to reach you.</p>${tel ? `<p>Prefer to talk? <a href="${tel}" style="color:#fbbf8a">${phone}</a></p>` : ""}</div>
+<section id="estimate" class="final">${img(ctaBg, 1800, 1000)}<div class="wrap">
+<div><span class="kicker" style="color:#ffb38a">Free to ask</span><h2>Let's talk about your roof.</h2><p>Send a few details and the best way to reach you.${tel ? ` Or call <a href="${tel}" style="color:#fff">${phone}</a>.` : ""}</p></div>
 <form data-preview="true" onsubmit="event.preventDefault();this.querySelector('.note').textContent='This is a preview, so the form is not active yet. Please call instead.'">
+<h3>Request an estimate</h3>
 <input name="name" placeholder="Your name" autocomplete="name" aria-label="Your name">
 <input name="phone" placeholder="Phone" autocomplete="tel" aria-label="Phone">
 <input name="address" placeholder="Property address" autocomplete="street-address" aria-label="Property address">
 <textarea name="msg" rows="3" placeholder="What's going on with your roof?" aria-label="What's going on with your roof?"></textarea>
 <button class="btn" type="submit">Send request</button>
 <p class="note">Preview: this form becomes active when the site goes live.</p>
-</form></div></div></section>
+</form></div></section>
 </main>
-<footer><div class="wrap"><span>© ${new Date().getFullYear()} ${name}${b.license ? ` · WA license #${esc(b.license.number)}` : ""}</span>${tel ? `<a href="${tel}">${phone}</a>` : ""}</div></footer>
+<footer><div class="wrap"><span>© ${new Date().getFullYear()} ${name}${lic ? ` · WA contractor license #${esc(lic.number)}` : ""}</span>${tel ? `<a href="${tel}">${phone}</a>` : ""}
+<span class="cr">Photos: ${credits.filter((p, i, a) => a.findIndex((q) => q.author === p.author) === i).map((p) => `<a href="${esc(p.authorUrl)}?utm_source=roofline&amp;utm_medium=referral" rel="noopener">${esc(p.author)}</a>`).join(", ")} on <a href="https://unsplash.com/?utm_source=roofline&amp;utm_medium=referral" rel="noopener">Unsplash</a></span></div></footer>
 <aside id="rl-bar" aria-label="${esc(brand.name)} preview"><div class="wrap">
-<span><b>Your new site, built by ${esc(brand.name)}.</b> $150/month<span class="hide-sm"> · no setup fee · cancel anytime · free edits</span></span>
+<span><b>Your new site, by ${esc(brand.name)}.</b> $150/month<span class="hide-sm"> · no setup fee · cancel anytime · free edits</span></span>
 <a class="btn" href="${esc(opts.purchaseUrl)}">Get this site</a>
 </div></aside>
 </body></html>`;

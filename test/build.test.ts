@@ -21,7 +21,7 @@ describe("builder + reviewer", () => {
 
   it("catches an unsupported claim, wrong phone, and wrong purchase link", async () => {
     const html = renderRidge(brief, roofing.brand, { purchaseUrl: buy })
-      .replace("with straight answers.", "with straight answers. Licensed and insured.")
+      .replace("we'll take it from there.", "we'll take it from there. Licensed and insured.")
       .replace('href="tel:+15095550100"', 'href="tel:+15095559999"')
       .replace(buy, "https://app.test/p/8/v1/buy");
     const dir = await mkdtemp(join(tmpdir(), "pv-")); const path = join(dir, "index.html"); await writeFile(path, html);
@@ -32,7 +32,7 @@ describe("builder + reviewer", () => {
   }, 30000);
 
   it("allows license words only when verified, and keeps customer review text out of the claim check", async () => {
-    const b3 = { ...brief, services: ["Roof repair"], license: { number: "ACMERL123AB", bonded: true, insured: true } };
+    const b3 = { ...brief, services: ["Roof repair"], license: { number: "ACMERL123AB", bonded: true, insured: true, since: 2016 } };
     const live = { rating: 4.9, count: 31, mapsUrl: null, reviews: [{ author: "Pat", authorUrl: null, photo: null, rating: 5,
       text: "Fast emergency replacement, certified crew, best in town!", when: "a month ago" }] };
     const out = await writePreview(await mkdtemp(join(tmpdir(), "pv-")), renderRidge(b3, roofing.brand, { purchaseUrl: buy, live }));

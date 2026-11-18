@@ -37,7 +37,11 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - WA L&I license enrichment (data.wa.gov, phone or exact-name match only): 50 active, 6 inactive (closed, not targeted), 16 not matched (no license claims), 33 Idaho (not yet checked). Owner first names stored for greetings.
 - Redesigned "ridge" template with complete sections: hero, trust bar, services, why-us (verified facts only), live Google reviews (only if rating >= 3.5; fetched at render, not stored; attributed), how it works, service area + map + hours, FAQ, estimate form (preview-disabled), purchase bar showing $150/month.
 - Preview server (`npm run serve`): unguessable token links; serves only reviewer-approved versions; noindex/no-store; /buy creates Stripe Checkout (verified 303 to checkout.stripe.com in sandbox); Stripe webhook endpoint with signature verification. Not yet hosted publicly.
-- Image policy: use the business's own photos only when they show the owner/crew (not stock); otherwise Roofline artwork. Not yet implemented.
+- Premium template v2 (Dribbble-informed patterns, original layout): full-bleed photo hero, glass rating badge, verified stats strip (rating, reviews, WA licensed since), photo service cards, why-us split, dark reviews section, steps, area/map/hours, FAQ, photo-backed estimate CTA, floating purchase bar.
+- Photo library: 31 curated Unsplash photos (hotlinked + photographer credit per Unsplash API guidelines; download endpoint triggered). Never captioned as the roofer's work. Owner/crew photos from the roofer's own site: not yet implemented.
+- License "since" year stored from L&I effective date (may be a re-licensing date; can only understate).
+- Reviewer now scrolls the page and waits for every image before judging.
+- Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
 Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, live-mode Stripe.
 

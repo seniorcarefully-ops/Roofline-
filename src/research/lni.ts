@@ -9,6 +9,7 @@ export interface LniLicense {
   businessName: string;
   status: string;            // ACTIVE, EXPIRED, SUSPENDED, ...
   expires: string | null;
+  effective: string | null;
   specialties: string[];
   phone: string | null;
   principal: string | null;  // "LAST, FIRST" as registered
@@ -31,6 +32,7 @@ function toLicense(r: any): LniLicense {
     businessName: r.businessname,
     status: r.contractorlicensestatus,
     expires: r.licenseexpirationdate ?? null,
+    effective: r.licenseeffectivedate ?? null,
     specialties: [r.specialtycode1desc, r.specialtycode2desc].filter(Boolean),
     phone: r.phonenumber ?? null,
     principal: r.primaryprincipalname ?? null,

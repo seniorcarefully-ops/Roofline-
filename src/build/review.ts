@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
-import { chromium, devices, type Browser } from "playwright";
+import { devices, type Browser } from "playwright";
+import { launchBrowser } from "../research/inspect.js";
 import type { BuildBrief } from "./brief.js";
 
 export interface ReviewCheck { name: string; pass: boolean; detail?: string }
@@ -14,7 +15,7 @@ const UNSUPPORTED = /\b(repairs?|replacements?|inspections?|residential|commerci
  */
 export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchaseUrl: string, browser?: Browser): Promise<ReviewResult> {
   const own = !browser;
-  const b = browser ?? (await chromium.launch());
+  const b = browser ?? (await launchBrowser());
   const checks: ReviewCheck[] = [];
   const check = (name: string, pass: boolean, detail?: string) => checks.push({ name, pass, ...(pass ? {} : { detail }) });
   try {
@@ -24,10 +25,17 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.goto(pathToFileURL(htmlPath).href);
+      // Scroll through so lazy images load, then wait for the network to settle.
+      await page.evaluate(`(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); } window.scrollTo(0, 0); })()`);
+      await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+      // Wait (max 15s) for every image to finish loading or fail, so slow photos are not misjudged.
+      await page.evaluate(`Promise.race([Promise.all(Array.from(document.images).map(function(i){ return i.complete ? 0 :
+        new Promise(function(r){ i.addEventListener("load", r); i.addEventListener("error", r); }); })),
+        new Promise(function(r){ setTimeout(r, 15000); })])`);
       const m = await page.evaluate(`({
         overflow: document.documentElement.scrollWidth - window.innerWidth,
         title: document.title,
-        h1: (document.querySelector("h1")||{}).innerText || "",
+        h1: (document.querySelector(".logo")||{}).innerText || "",
         robots: (document.querySelector('meta[name=robots]')||{}).content || "",
         tels: Array.from(document.querySelectorAll('a[href^="tel:"]')).map(function(a){return a.getAttribute("href")}),
         imgsBroken: Array.from(document.images).filter(function(i){return !i.complete || i.naturalWidth===0}).length,
@@ -42,7 +50,7 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       check(`${label}: purchase bar visible`, m.barVisible);
       check(`${label}: price shown`, m.priceVisible);
       if (label === "desktop") {
-        check("business name in title and heading", m.title.includes(brief.businessName) && m.h1.includes(brief.businessName));
+        check("business name in title and header", m.title.includes(brief.businessName) && m.h1.includes(brief.businessName));
         check("noindex set", /noindex/.test(m.robots));
         check("no broken images", m.imgsBroken === 0, `${m.imgsBroken} broken`);
         const telsOk = brief.phoneE164 ? m.tels.length > 0 && m.tels.every((t: string) => t === `tel:${brief.phoneE164}`) : m.tels.length === 0;
@@ -58,8 +66,8 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
           .find((w) => !verified.includes(w.toLowerCase()));
         check("no unsupported claims", !bad, bad);
         if (brief.rating && brief.reviewCount)
-          check("rating matches Google listing", m.siteText.includes(`${brief.rating.toFixed(1)} from ${brief.reviewCount} Google reviews`));
-        else check("no rating shown without data", !/Google reviews/.test(m.siteText));
+          check("rating matches Google listing", m.siteText.includes(`${brief.rating.toFixed(1)}`) && m.siteText.includes(`From ${brief.reviewCount} reviews on Google`));
+        else check("no rating shown without data", !/reviews on Google|Google rating/.test(m.siteText));
       }
       await ctx.close();
     }

@@ -36,7 +36,8 @@ export async function assembleBrief(db: Db, prospectId: number, version: number)
     servicesSource: "category",
     placeId: p.place_id,
     license: p.license_status === "ACTIVE"
-      ? { number: p.license_number, bonded: p.license_bonded, insured: p.license_insured } : null,
+      ? { number: p.license_number, bonded: p.license_bonded, insured: p.license_insured,
+          since: p.license_since ? new Date(p.license_since).getUTCFullYear() : null } : null,
     hours: d.regularOpeningHours?.weekdayDescriptions ?? null,
     rating: d.rating ?? null,
     reviewCount: d.userRatingCount ?? null,

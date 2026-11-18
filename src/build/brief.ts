@@ -18,7 +18,7 @@ export const BuildBrief = z.object({
   reviewCount: z.number().int().nullable(),
   googleMapsUrl: z.string().url().nullable(),
   placeId: z.string().nullable(),
-  license: z.object({ number: z.string(), bonded: z.boolean().nullable(), insured: z.boolean().nullable() }).nullable(),
+  license: z.object({ number: z.string(), bonded: z.boolean().nullable(), insured: z.boolean().nullable(), since: z.number().int().nullable().default(null) }).nullable(),
   servicesSource: z.enum(["website", "category"]).nullable(), // category = Google says roofing_contractor
   sources: z.array(z.string()),            // URLs the facts came from
 });

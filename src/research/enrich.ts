@@ -28,9 +28,9 @@ export async function enrichLicenses(pool: pg.Pool, limit = 200) {
     const bi = l.status === "ACTIVE" ? await bondAndInsurance(l.license) : { bonded: null, insured: null };
     await pool.query(
       `UPDATE prospects SET license_number=$2, license_status=$3, license_bonded=$4, license_insured=$5, license_match=$6,
-         principal_first_name=$7, license_checked_at=now(),
+         principal_first_name=$7, license_since=$8, license_checked_at=now(),
          contact_first_name = COALESCE(contact_first_name, $7) WHERE id=$1`,
-      [p.id, l.license, l.status, bi.bonded, bi.insured, m.by, firstNameFromPrincipal(l.principal)]);
+      [p.id, l.license, l.status, bi.bonded, bi.insured, m.by, firstNameFromPrincipal(l.principal), l.effective ? l.effective.slice(0, 10) : null]);
     await pool.query(
       `INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'license','lni',$2)`,
       [String(p.id), { license: l.license, status: l.status, match: m.by, ...bi, source: "data.wa.gov m8qx-ubtq" }]);
