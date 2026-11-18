@@ -31,3 +31,23 @@ export async function activeNiche(db: Db): Promise<{ id: number; config: NicheCo
   );
   return r.rowCount ? { id: Number(r.rows[0].id), config: NicheConfig.parse(r.rows[0].config) } : null;
 }
+
+/**
+ * Publish the code's current config for a niche if it differs from the latest stored
+ * version, activate it, and move prospects that have NOT been contacted yet onto it.
+ * Contacted prospects keep the version they were contacted under.
+ */
+export async function refreshNiche(db: Db, config: NicheConfig, actor: string): Promise<{ version: number; moved: number }> {
+  const c = NicheConfig.parse(config);
+  const latest = (await db.query(
+    `SELECT id, config FROM niche_versions WHERE niche_id = $1 ORDER BY version DESC LIMIT 1`, [c.niche])).rows[0];
+  const id = latest && JSON.stringify(latest.config) === JSON.stringify(c) ? Number(latest.id) : await publishNicheVersion(db, c);
+  await activateNicheVersion(db, id, actor);
+  const moved = await db.query(
+    `UPDATE prospects p SET niche_version_id = $1, updated_at = now()
+     FROM niche_versions v WHERE v.id = p.niche_version_id AND v.niche_id = $2 AND p.niche_version_id <> $1
+       AND p.prospect_state IN ('discovered','qualified')
+       AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.prospect_id = p.id AND m.direction = 'outbound')`,
+    [id, c.niche]);
+  return { version: id, moved: moved.rowCount ?? 0 };
+}

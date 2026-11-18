@@ -44,6 +44,20 @@ export async function buildAndReview(pool: pg.Pool, prospectId: number) {
   await pool.query(`INSERT INTO reviews(preview_id, verdict, checks, reviewer) VALUES ($1,$2,$3,'auto-reviewer')`,
     [pv.rows[0].id, r.verdict, JSON.stringify(r.checks)]);
   if (r.verdict === "approved") {
+    // Thumbnail of the approved preview for the opt-in page (blurred there).
+    try {
+      const { launchBrowser } = await import("../research/inspect.js");
+      const { devices } = await import("playwright");
+      const { pathToFileURL } = await import("node:url");
+      const b = await launchBrowser();
+      try {
+        const pg2 = await (await b.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 2 })).newPage();
+        await pg2.goto(pathToFileURL(out.path).href, { waitUntil: "networkidle", timeout: 20000 }).catch(() => {});
+        await pg2.addStyleTag({ content: "#rl-bar{display:none!important}" });
+        const png = await pg2.screenshot({ type: "png" });
+        await pool.query(`UPDATE previews SET thumb = $2 WHERE id = $1`, [pv.rows[0].id, png]);
+      } finally { await b.close(); }
+    } catch (e) { console.error("thumbnail failed:", e instanceof Error ? e.message : e); }
     await transition(pool, prospectId, "website_state", "approved", "auto-reviewer");
     await transition(pool, prospectId, "website_state", "ready_to_send", "auto-reviewer");
   } else {

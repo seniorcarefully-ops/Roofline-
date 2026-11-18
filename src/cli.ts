@@ -1,6 +1,6 @@
 import { createPool } from "./db.js";
 import { migrate } from "./migrate.js";
-import { activeNiche, activateNicheVersion, publishNicheVersion } from "./niches/registry.js";
+import { activeNiche, activateNicheVersion, publishNicheVersion, refreshNiche } from "./niches/registry.js";
 import { roofing } from "./niches/roofing.js";
 import { discover } from "./research/discover.js";
 import { auditProspects } from "./research/audit.js";
@@ -22,6 +22,7 @@ try {
     const out = await buildAndReview(pool, Number(r.rows[0].id));
     console.log(JSON.stringify({ verdict: out.verdict, url: (out as any).url, failed: (out as any).checks?.filter((c: any) => !c.pass) }));
   }
+  else if (cmd === "niche-refresh") console.log(await refreshNiche(pool, roofing, "cli"));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();

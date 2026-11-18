@@ -187,3 +187,19 @@ describe("no-website email", () => {
     expect(g).toMatchObject({ ok: true, template: "no_website" });
   });
 });
+
+import { refreshNiche } from "../src/niches/registry.js";
+describe("niche refresh", () => {
+  it("moves only uncontacted prospects to the new config", async () => {
+    const v1 = await publishNicheVersion(pool, roofing);
+    await activateNicheVersion(pool, v1, "t");
+    const fresh = await prospect(v1);
+    const contacted = await prospect(v1, { normalized_domain: "b.test" });
+    await pool.query(`INSERT INTO messages(prospect_id, channel, direction, body) VALUES ($1,'email','outbound','x')`, [contacted]);
+    const r = await refreshNiche(pool, { ...roofing, brand: { ...roofing.brand, tagline: "changed" } }, "t");
+    expect(r.moved).toBe(1);
+    const v = async (id: number) => Number((await pool.query(`SELECT niche_version_id FROM prospects WHERE id=$1`, [id])).rows[0].niche_version_id);
+    expect(await v(fresh)).toBe(r.version);
+    expect(await v(contacted)).toBe(v1);
+  });
+});

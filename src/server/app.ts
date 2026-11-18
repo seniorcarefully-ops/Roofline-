@@ -11,6 +11,9 @@ import { activeNiche } from "../niches/registry.js";
 import { stripe } from "../billing/stripe.js";
 import { canceledPage, messagePage, successPage, type Brand } from "./pages.js";
 import { previewUrlFor } from "../build/pipeline.js";
+import { consentText, loadOptin, renderOptin } from "./optin.js";
+import { brandPage } from "./pages.js";
+import { grantSms, toE164 } from "../outreach/consent.js";
 
 const send = (res: ServerResponse, status: number, body: string, type = "text/html; charset=utf-8", extra: Record<string, string> = {}) => {
   res.writeHead(status, { "Content-Type": type, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin", ...extra });
@@ -51,6 +54,57 @@ export function createApp(pool: pg.Pool) {
       const m = url.pathname.match(/^\/p\/([A-Za-z0-9_-]{16,64})(\/buy)?\/?$/);
 
       if (req.method === "GET" && url.pathname === "/healthz") return send(res, 200, "ok", "text/plain");
+
+      // Audit + SMS opt-in page (the link in the email).
+      const s = url.pathname.match(/^\/s\/([A-Za-z0-9_-]{16,64})(?:\/(optin|thumb\.png|img\/([A-Za-z0-9._-]{1,80})))?\/?$/);
+      if (s) {
+        const token = s[1]!;
+        if (req.method === "GET" && s[2] === "thumb.png") {
+          const r = await pool.query(`SELECT thumb FROM previews WHERE token = $1 AND thumb IS NOT NULL`, [token]);
+          return r.rowCount ? send(res, 200, r.rows[0].thumb, "image/png", { "Cache-Control": "private, max-age=3600" }) : send(res, 404, "", "text/plain");
+        }
+        if (req.method === "GET" && s[3]) {
+          const r = await pool.query(`SELECT e.png FROM evidence_images e JOIN previews pv ON pv.prospect_id = e.prospect_id
+            WHERE pv.token = $1 AND e.key = $2`, [token, decodeURIComponent(s[3])]);
+          return r.rowCount ? send(res, 200, r.rows[0].png, "image/png", { "Cache-Control": "private, max-age=3600" }) : send(res, 404, "", "text/plain");
+        }
+        const d = await loadOptin(pool, token);
+        if (!d) return send(res, 404, messagePage(await currentBrand(pool), "Not found", "This link isn't available.", "It may have expired or been replaced."));
+        if (req.method === "GET" && !s[2]) {
+          const pv = (await pool.query(`SELECT prospect_id FROM previews WHERE token = $1`, [token])).rows[0];
+          await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'optin_view','visitor',$2)`,
+            [String(pv.prospect_id), { ua: String(req.headers["user-agent"] ?? "").slice(0, 200) }]);
+          return send(res, 200, renderOptin(d), undefined, { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" });
+        }
+        if (req.method === "POST" && s[2] === "optin") {
+          const form = new URLSearchParams(await readBody(req, 10_000));
+          const phone = (form.get("phone") ?? "").slice(0, 40);
+          if (!toE164(phone)) return send(res, 400, renderOptin(d, { error: "Please enter a valid US cell number.", phone }));
+          if (form.get("consent") !== "yes") return send(res, 400, renderOptin(d, { error: "Please check the box to agree to receive texts.", phone }));
+          const pv = (await pool.query(`SELECT prospect_id FROM previews WHERE token = $1`, [token])).rows[0];
+          const pid = Number(pv.prospect_id);
+          try {
+            await grantSms(pool, pid, phone, `${consentText(d.brand.name)} [checked; number entered: ${phone}]`, `optin_page:${token}`);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (/suppressed/.test(msg)) return send(res, 400, renderOptin(d, { error: "This number opted out of our texts earlier. Text START to us to opt back in.", phone }));
+            if (!/not allowed/.test(msg)) throw e; // already granted: fine, continue
+          }
+          const st = (await pool.query(`SELECT prospect_state FROM prospects WHERE id = $1`, [pid])).rows[0]?.prospect_state;
+          if (st === "contacted") await (await import("../state.js")).transition(pool, pid, "prospect_state", "interested", "optin_page");
+          const twilioReady = !!process.env.TWILIO_FROM_NUMBER;
+          if (twilioReady) {
+            await (await import("../jobs.js")).enqueue(pool, "sms.send_preview", { prospect_id: pid, token }, { key: `sms.send_preview:${pid}:${token}` });
+            return send(res, 200, brandPage(d.brand, { title: "Check your texts", kicker: "On its way", icon: "check", tone: "success",
+              heading: "Check your texts.", lead: `I just texted the link to your new ${d.company} website. Reply anytime with questions.`,
+              actions: [{ href: previewUrlFor(token), label: "Or open it here", primary: true }] }));
+          }
+          // Texting is not switched on yet: show the preview right away instead of promising a text.
+          return send(res, 200, brandPage(d.brand, { title: "Your new site", kicker: "Thanks", icon: "check", tone: "success",
+            heading: "Here's your new site.", lead: `Thanks! Tap below to see the website I built for ${d.company}.`,
+            actions: [{ href: previewUrlFor(token), label: "See your new site", primary: true }] }));
+        }
+      }
 
       if (req.method === "GET" && m && !m[2]) {
         const pv = await approvedPreview(pool, m[1]!);

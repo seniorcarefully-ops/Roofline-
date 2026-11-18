@@ -44,6 +44,8 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
 ## Hosting (Render, workspace "Roofline", region Oregon)
+- Audit + SMS opt-in page /s/<preview token> (the email link): personal hero, blurred phone mockup of the approved preview, up to 3 findings with evidence screenshots (stored in DB), cell + explicit consent checkbox; consent stored verbatim with source. Until Twilio is configured, the page shows the preview link immediately instead of promising a text. Verified locally end to end (Barton Roofing).
+- `niche-refresh` moves not-yet-contacted prospects onto the latest niche config (fixes new audit checks being ignored for older records).
 - Branded system pages (checkout success with business summary + next steps, canceled with link back to preview, already purchased, not found, error) live 2026-11-18. Purchases open an onboarding exception for the owner until onboarding is automated.
 - Render auto-deploy on push is not firing (autoDeploy=yes); deploys are triggered via the Render API after pushes.
 - Main domain rooflinewebsites.com (Cloudflare registrar; DNS via API token scoped to this zone). Root and www CNAME (DNS-only) to Render; both verified; HTTPS live. APP_BASE_URL and Stripe webhook URL switched to https://rooflinewebsites.com (2026-11-18).

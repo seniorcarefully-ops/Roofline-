@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { readFile, stat } from "node:fs/promises";
+import { basename, join } from "node:path";
 import type pg from "pg";
 import { inspectSite, launchBrowser } from "./inspect.js";
 
@@ -28,11 +29,19 @@ export async function auditProspects(pool: pg.Pool, limit = 50) {
         r = { ok: false, finalUrl: null, error: `inspector error: ${e instanceof Error ? e.message.split("\n")[0] : e}`, findings: [] };
       }
       summary.audited++;
+      // Persist evidence images (keyed by file name) so the hosted audit page can show them.
+      for (const path of new Set(r.findings.map((f) => f.evidencePath))) {
+        const sz = await stat(path).then((x) => x.size).catch(() => 0);
+        if (sz > 0 && sz < 3_000_000)
+          await pool.query(`INSERT INTO evidence_images(prospect_id, key, png) VALUES ($1,$2,$3)
+            ON CONFLICT (prospect_id, key) DO UPDATE SET png = EXCLUDED.png, created_at = now()`,
+            [p.id, basename(path), await readFile(path)]);
+      }
       for (const f of r.findings)
         await pool.query(
           `INSERT INTO audit_findings(prospect_id, code, summary, detail, source_url, evidence_path, captured_at, verified)
            VALUES ($1,$2,$2,$3,$4,$5,now(),true) ON CONFLICT (prospect_id, code) DO NOTHING`,
-          [p.id, f.code, f.detail, f.sourceUrl, f.evidencePath]);
+          [p.id, f.code, f.detail, f.sourceUrl, basename(f.evidencePath)]);
       await pool.query(
         `INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'audit','auditor',$2)`,
         [String(p.id), { version: AUDIT_VERSION, ok: r.ok, error: r.error ?? null, finalUrl: r.finalUrl, findings: r.findings.map((f) => f.code) }]);
