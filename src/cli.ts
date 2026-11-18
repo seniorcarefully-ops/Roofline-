@@ -23,6 +23,15 @@ try {
     console.log(JSON.stringify({ verdict: out.verdict, url: (out as any).url, failed: (out as any).checks?.filter((c: any) => !c.pass) }));
   }
   else if (cmd === "niche-refresh") console.log(await refreshNiche(pool, roofing, "cli"));
+  else if (cmd === "twilio-numbers") {
+    const t = await import("./sms/twilio.js");
+    console.log(JSON.stringify({ owned: await t.listOwnedNumbers(), available: await t.searchNumbers(args[0] ?? "509") }));
+  }
+  else if (cmd === "twilio-buy") {
+    const t = await import("./sms/twilio.js");
+    if (!/^\+1\d{10}$/.test(args[0] ?? "")) throw new Error("usage: twilio-buy +1XXXXXXXXXX");
+    console.log(JSON.stringify(await t.buyNumber(args[0]!, "Roofline main")));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
