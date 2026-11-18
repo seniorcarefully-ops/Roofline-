@@ -141,9 +141,11 @@ I noticed your website is missing [X], [Y], and [Z]. I’ve attached a short aud
 
 I went ahead and built a new website for [Company] that addresses these issues.
 
-Just reply with your cell number and permission to text you the preview. No obligation.
+Just reply with your cell number and permission to text you the preview, or enter it here: [Link]. No obligation.
 
 —[Name]
+
+(Opt-in link approved November 18, 2026.)
 
 Operational requirements:
 
@@ -166,11 +168,11 @@ I came across [Company] on Google. You have [N] reviews averaging [Rating] stars
 
 I went ahead and built a website for [Company] using your public business information.
 
-Just reply with your cell number and permission to text you the preview. No obligation.
+Just reply with your cell number and permission to text you the preview, or enter it here: [Link]. No obligation.
 
 —[Name]
 
-### 6.2 PROPOSED revision (not approved): opt-in link in the email
+### 6.2 Opt-in link revision (APPROVED November 18, 2026; now part of the locked email)
 
 Current locked line: "Just reply with your cell number and permission to text you the preview. No obligation."
 Proposed: "Just reply with your cell number and permission to text you the preview, or enter it here: [link]. No obligation."

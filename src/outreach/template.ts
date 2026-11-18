@@ -1,6 +1,6 @@
 /**
  * LOCKED initial cold email. Do not change this wording without Micah's
- * explicit approval (plan section 6). Placeholders are filled only with
+ * explicit approval (plan section 6). Opt-in link added with approval 2026-11-18. Placeholders are filled only with
  * verified data; rendering refuses anything missing.
  */
 export const LOCKED_SUBJECT = "A new website for [Company]";
@@ -10,7 +10,7 @@ I noticed your website is missing [X], [Y], and [Z]. I’ve attached a short aud
 
 I went ahead and built a new website for [Company] that addresses these issues.
 
-Just reply with your cell number and permission to text you the preview. No obligation.
+Just reply with your cell number and permission to text you the preview, or enter it here: [Link]. No obligation.
 
 —[Name]`;
 
@@ -22,6 +22,7 @@ export interface EmailVars {
   firstName: string | null;
   findings: [string, string, string];
   senderName: string;
+  optInUrl: string; // our SMS opt-in page for this prospect
 }
 
 export function renderInitialEmail(v: EmailVars): { subject: string; body: string } {
@@ -37,7 +38,9 @@ export function renderInitialEmail(v: EmailVars): { subject: string; body: strin
       .replace("[X]", v.findings[0])
       .replace("[Y]", v.findings[1])
       .replace("[Z]", v.findings[2])
-      .replaceAll("[Name]", v.senderName);
+      .replaceAll("[Name]", v.senderName)
+      .replaceAll("[Link]", v.optInUrl);
+  if (!/^https:\/\//.test(v.optInUrl)) throw new Error("opt-in link must be https");
   const out = { subject: fill(LOCKED_SUBJECT), body: fill(LOCKED_BODY) };
   if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
   return out;
@@ -54,7 +57,7 @@ I came across [Company] on Google. You have [N] reviews averaging [Rating] stars
 
 I went ahead and built a website for [Company] using your public business information.
 
-Just reply with your cell number and permission to text you the preview. No obligation.
+Just reply with your cell number and permission to text you the preview, or enter it here: [Link]. No obligation.
 
 \u2014[Name]`;
 
@@ -64,6 +67,7 @@ export interface NoSiteVars {
   reviewCount: number;
   rating: number;
   senderName: string;
+  optInUrl: string;
 }
 
 export function renderNoWebsiteEmail(v: NoSiteVars): { subject: string; body: string } {
@@ -72,7 +76,9 @@ export function renderNoWebsiteEmail(v: NoSiteVars): { subject: string; body: st
   if (!(v.rating >= 1 && v.rating <= 5)) throw new Error("invalid rating");
   const greeting = v.firstName?.trim() || GREETING_FALLBACK(v.company);
   const fill = (s: string) => s.replaceAll("[Company]", v.company).replaceAll("[First Name]", greeting)
-    .replace("[N]", String(v.reviewCount)).replace("[Rating]", v.rating.toFixed(1)).replaceAll("[Name]", v.senderName);
+    .replace("[N]", String(v.reviewCount)).replace("[Rating]", v.rating.toFixed(1)).replaceAll("[Name]", v.senderName)
+    .replaceAll("[Link]", v.optInUrl);
+  if (!/^https:\/\//.test(v.optInUrl)) throw new Error("opt-in link must be https");
   const out = { subject: fill(LOCKED_NO_SITE_SUBJECT), body: fill(LOCKED_NO_SITE_BODY) };
   if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
   return out;

@@ -105,15 +105,16 @@ describe("jobs", () => {
 describe("locked email", () => {
   it("renders the exact approved wording", () => {
     const e = renderInitialEmail({ company: "Acme Roofing", firstName: "Dana",
-      findings: ["a", "b", "c"], senderName: "Micah" });
+      findings: ["a", "b", "c"], senderName: "Micah", optInUrl: "https://rooflinewebsites.com/t/abc" });
     expect(e.subject).toBe("A new website for Acme Roofing");
     expect(e.body).toBe(LOCKED_BODY.replace("[First Name]", "Dana").replace("[X]", "a").replace("[Y]", "b")
-      .replace("[Z]", "c").replaceAll("[Company]", "Acme Roofing").replace("[Name]", "Micah"));
+      .replace("[Z]", "c").replaceAll("[Company]", "Acme Roofing").replace("[Name]", "Micah").replace("[Link]", "https://rooflinewebsites.com/t/abc"));
+    expect(e.body).toContain("or enter it here: https://rooflinewebsites.com/t/abc. No obligation.");
     expect(e.body).not.toMatch(/Want to see it/);
   });
   it("refuses to pad findings", () => {
     expect(() => renderInitialEmail({ company: "A", firstName: null,
-      findings: ["a", "b", ""] as [string, string, string], senderName: "M" })).toThrow();
+      findings: ["a", "b", ""] as [string, string, string], senderName: "M", optInUrl: "https://x.test/t" })).toThrow();
   });
 });
 
@@ -160,14 +161,14 @@ describe("sms consent", () => {
 import { renderNoWebsiteEmail, LOCKED_NO_SITE_BODY } from "../src/outreach/template.js";
 describe("no-website email", () => {
   it("renders approved wording with verified listing facts", () => {
-    const e = renderNoWebsiteEmail({ company: "Acme Roofing", firstName: null, reviewCount: 12, rating: 4.6, senderName: "Micah" });
+    const e = renderNoWebsiteEmail({ company: "Acme Roofing", firstName: null, reviewCount: 12, rating: 4.6, senderName: "Micah", optInUrl: "https://rooflinewebsites.com/t/x" });
     expect(e.subject).toBe("A website for Acme Roofing");
     expect(e.body).toContain("Hi Acme Roofing team,");
     expect(e.body).toContain("You have 12 reviews averaging 4.6 stars, but no website linked to your listing");
     expect(e.body.split("\n").length).toBe(LOCKED_NO_SITE_BODY.split("\n").length);
   });
   it("refuses unverified or thin data", () => {
-    expect(() => renderNoWebsiteEmail({ company: "A", firstName: null, reviewCount: 3, rating: 5, senderName: "M" })).toThrow();
+    expect(() => renderNoWebsiteEmail({ company: "A", firstName: null, reviewCount: 3, rating: 5, senderName: "M", optInUrl: "https://x.test/t" })).toThrow();
   });
   it("gate uses listing facts instead of audit, still needs approved preview", async () => {
     const v = await publishNicheVersion(pool, roofing);
