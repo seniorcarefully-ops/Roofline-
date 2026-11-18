@@ -16,6 +16,12 @@ try {
   else if (cmd === "audit") console.log(await auditProspects(pool, Number(args[0] ?? 50)));
   else if (cmd === "build") console.log(JSON.stringify(await buildAndReview(pool, Number(args[0])), null, 1));
   else if (cmd === "licenses") console.log(await enrichLicenses(pool));
+  else if (cmd === "build-name") {
+    const r = await pool.query(`SELECT id FROM prospects WHERE business_name = $1`, [args.join(" ")]);
+    if (!r.rowCount) throw new Error("no prospect with that name");
+    const out = await buildAndReview(pool, Number(r.rows[0].id));
+    console.log(JSON.stringify({ verdict: out.verdict, url: (out as any).url, failed: (out as any).checks?.filter((c: any) => !c.pass) }));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
