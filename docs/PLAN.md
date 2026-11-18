@@ -176,6 +176,21 @@ Just reply with your cell number and permission to text you the preview, or ente
 
 Current locked line: "Just reply with your cell number and permission to text you the preview. No obligation."
 Proposed: "Just reply with your cell number and permission to text you the preview, or enter it here: [link]. No obligation."
+A/B test APPROVED November 18, 2026 (Micah: "Approve test"): variant A = current locked email with audit attachment + opt-in link; variant B = no attachment, audit hosted on the link page (wording below), judged on purchases.
+
+Variant B wording (approved for the test only):
+
+Subject: A new website for [Company]
+
+Hi [First Name],
+
+I noticed your website is missing [X], [Y], and [Z]. I put together a short audit showing what I found, and I went ahead and built a new website for [Company] that fixes these issues.
+
+You can see both here: [Link]. Or just reply with your cell number and I'll text you the preview. No obligation.
+
+—[Name]
+I build websites just for [niche plural].
+
 Deliverability note: links and attachments in a first cold email lower inbox placement. Recommended rollout is a controlled A/B test against the current locked control.
 
 ## 7. Main acquisition journey
