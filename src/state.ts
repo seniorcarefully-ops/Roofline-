@@ -5,7 +5,7 @@ export const TRANSITIONS = {
   prospect_state: {
     discovered: ["qualified", "closed"],
     qualified: ["contacted", "closed"],
-    contacted: ["interested", "closed"],
+    contacted: ["interested", "purchased", "closed"],
     interested: ["purchased", "closed"],
     purchased: [],
     closed: [],

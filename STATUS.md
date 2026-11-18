@@ -12,7 +12,13 @@ Done and tested (`npm test`, 12 tests, local Postgres):
 - Initial-email send gate (paused, state, suppression, approved review, audit attachment, 3 verified findings, no duplicate).
 - SMS consent capture with verbatim evidence; STOP suppression.
 
-Not yet: owner dashboard/auth, hosting, deployment.
+Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`):
+- Three independent monthly products/prices created idempotently by lookup key ($150 / $200 / $500).
+- Hosted Checkout session per service (promotion codes allowed), Customer Portal session.
+- Event processing exactly once: checkout completion marks prospect purchased and cancels queued outreach jobs; subscription create/update/delete mirrored; failed payment opens an exception.
+- Webhook signature verification; event polling sync works without a public URL.
+
+Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, live-mode Stripe.
 
 ## Connections
 | Vendor | Status |
@@ -20,7 +26,7 @@ Not yet: owner dashboard/auth, hosting, deployment.
 | GitHub repo | Connected |
 | Cloud environment `roofline` | Created; allows Anthropic, Stripe, Twilio, Instantly, Google Places |
 | Google Places | Live: test search returned real results 2026-11-18 (key stored as network secret, header X-Goog-Api-Key) |
-| Stripe | Waiting on account (existing entity + Roofline DBA) |
+| Stripe | Sandbox connected and tested 2026-11-18. Live: waiting on WA trade name + Stripe activation; final check = single-use 100%-off code, then delete it |
 | Twilio | Waiting on account; A2P registration needs DBA + address |
 | Instantly + sending domains | Waiting on account/domains |
 | Anthropic (production key) | Needed once hosting is chosen |

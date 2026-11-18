@@ -6,7 +6,9 @@
   "scripts": {
     "db:migrate": "tsx src/migrate.ts",
     "test": "vitest run",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test:stripe": "STRIPE_SANDBOX=1 NODE_USE_ENV_PROXY=1 vitest run test/billing.test.ts",
+    "billing:setup": "NODE_USE_ENV_PROXY=1 tsx src/billing/setup.ts"
   },
   "dependencies": {
     "pg": "^8.23.1",
