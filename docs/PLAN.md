@@ -114,6 +114,21 @@ Planning assumptions (to be replaced with measured Stage 1 data): roofing suppor
 
 Proposal, not yet decided: run proven niches in parallel rather than strictly in sequence, each under its own niche brand, domain and sending domains, so earlier niches keep producing while new ones ramp.
 
+### 5.2 Decisions and proposals from November 18, 2026
+
+Confirmed direction (Micah):
+- Audit is a conversion piece: attention, evidence of the issue, and one call to action — opt in by SMS to see the site we built.
+- Voice: a real person who only builds websites for this niche. Never claim to be local to a prospect unless true.
+- AI SMS is both our sales assistant and the $200/month product; build one engine on Twilio + Claude, reused for both.
+- Post-purchase domain connection is one step via Entri Connect (assisted fallback for unsupported providers).
+- Customer portal: simple, clean; self-serve site updates with visible results; manage subscriptions and add/remove upsells (Stripe Customer Portal).
+- Roofline public phone number: calls go to voicemail, then the AI SMS assistant follows up, demonstrating the upsell. Approved as a good idea.
+- Growth is self-funding: after the jumpstart, acquisition spend is capped at a share of collected revenue.
+
+PROPOSED, awaiting approval:
+- Locked email change to add an SMS opt-in link (see section 6.2).
+- Growth governor numbers (see section 20.1).
+
 ## 6. LOCKED: initial cold email
 
 Preserve this exact subject and body unless Micah explicitly approves a revision. Populate placeholders only with verified information. Do not reintroduce “Want to see it?”
@@ -154,6 +169,12 @@ I went ahead and built a website for [Company] using your public business inform
 Just reply with your cell number and permission to text you the preview. No obligation.
 
 —[Name]
+
+### 6.2 PROPOSED revision (not approved): opt-in link in the email
+
+Current locked line: "Just reply with your cell number and permission to text you the preview. No obligation."
+Proposed: "Just reply with your cell number and permission to text you the preview, or enter it here: [link]. No obligation."
+Deliverability note: links and attachments in a first cold email lower inbox placement. Recommended rollout is a controlled A/B test against the current locked control.
 
 ## 7. Main acquisition journey
 
@@ -374,6 +395,13 @@ All phases below are pending authorization and implementation; they are not clai
 | 8 — Optimization and scale | Controlled experiments, payback/retention reporting, increasing volume, additional niches | Measured economics and service capacity justify expansion |
 
 Target a complete small pilot before thousands of emails per month. The pilot size, thresholds, timeline, and budget are not yet committed. Do not promise guaranteed sales or unattended resolution of every exception.
+
+### 20.1 PROPOSED growth governor (not approved)
+
+- Jumpstart: fixed acquisition budget (proposed $300/month) until 10 paying subscribers or 90 days.
+- After jumpstart: monthly acquisition spend <= 30% of trailing-30-day collected revenue.
+- Scale-up gates (all required): cost to acquire a customer <= 3 months of its revenue; monthly cancellations < 8%; email bounce < 2% and spam complaints < 0.1%.
+- If a gate fails, spend freezes at the current level and the owner is notified. Every automated purchase is logged.
 
 ## 21. Decisions still needed
 
