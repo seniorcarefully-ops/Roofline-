@@ -44,6 +44,7 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
 ## Hosting (Render, workspace "Roofline", region Oregon)
+- Main domain rooflinewebsites.com (Cloudflare registrar; DNS via API token scoped to this zone). Root and www CNAME (DNS-only) to Render; both verified; HTTPS live. APP_BASE_URL and Stripe webhook URL switched to https://rooflinewebsites.com (2026-11-18).
 - Postgres `roofline-db` (basic_256mb, 15 GB disk). Web service `roofline` (Docker, Playwright image, Starter $7/mo) at https://roofline-56l1.onrender.com, auto-deploys from branch claude/nice-newton-8sjsb5. Health check passing; migrations run on start.
 - One-off jobs via Render Jobs API work (pipeline commands run on Render, not in a chat session).
 - Stripe sandbox webhook endpoint created to /stripe/webhook; signing secret stored only as a Render env var.
