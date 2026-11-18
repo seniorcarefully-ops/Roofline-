@@ -31,11 +31,16 @@ export async function assembleBrief(db: Db, prospectId: number, version: number)
     phoneE164: e164,
     city: city && state ? `${city}, ${state}` : city,
     serviceArea: [],
-    services: [],
+    // Without a verified service list, use only what the Google category implies.
+    services: ["Roof repair", "Roof replacement"],
+    servicesSource: "category",
+    placeId: p.place_id,
+    license: p.license_status === "ACTIVE"
+      ? { number: p.license_number, bonded: p.license_bonded, insured: p.license_insured } : null,
     hours: d.regularOpeningHours?.weekdayDescriptions ?? null,
     rating: d.rating ?? null,
     reviewCount: d.userRatingCount ?? null,
     googleMapsUrl: d.googleMapsUri ?? null,
-    sources: [d.googleMapsUri ?? `place:${p.place_id}`],
+    sources: [d.googleMapsUri ?? `place:${p.place_id}`, ...(p.license_number ? [`wa-lni:${p.license_number}`] : [])],
   };
 }

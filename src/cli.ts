@@ -5,6 +5,7 @@ import { roofing } from "./niches/roofing.js";
 import { discover } from "./research/discover.js";
 import { auditProspects } from "./research/audit.js";
 import { buildAndReview } from "./build/pipeline.js";
+import { enrichLicenses } from "./research/enrich.js";
 
 const [cmd, ...args] = process.argv.slice(2);
 const pool = createPool();
@@ -14,6 +15,7 @@ try {
   if (cmd === "discover") console.log(await discover(pool, args.join(" ")));
   else if (cmd === "audit") console.log(await auditProspects(pool, Number(args[0] ?? 50)));
   else if (cmd === "build") console.log(JSON.stringify(await buildAndReview(pool, Number(args[0])), null, 1));
+  else if (cmd === "licenses") console.log(await enrichLicenses(pool));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();

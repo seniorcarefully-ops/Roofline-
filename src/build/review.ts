@@ -31,7 +31,8 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
         robots: (document.querySelector('meta[name=robots]')||{}).content || "",
         tels: Array.from(document.querySelectorAll('a[href^="tel:"]')).map(function(a){return a.getAttribute("href")}),
         imgsBroken: Array.from(document.images).filter(function(i){return !i.complete || i.naturalWidth===0}).length,
-        siteText: (document.querySelector("main")||document.body).innerText + " " + (document.querySelector("header")||{}).innerText,
+        siteText: (function(){ var m=(document.querySelector("main")||document.body).cloneNode(true); var r=m.querySelector("#reviews .revs"); if(r) r.remove(); return m.innerText + " " + document.querySelector("footer").innerText; })(),
+        priceVisible: ((x) => x.indexOf("$150/month") >= 0)((document.querySelector('#rl-bar')||{}).innerText||""),
         forms: Array.from(document.forms).map(function(f){return {preview: f.dataset.preview, action: f.getAttribute("action")}}),
         buy: (document.querySelector('#rl-bar a')||{}).href || "",
         barVisible: (function(){var e=document.querySelector('#rl-bar'); if(!e) return false; var r=e.getBoundingClientRect(); return r.height>0 && r.top < window.innerHeight})()
@@ -39,6 +40,7 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       check(`${label}: no horizontal overflow`, m.overflow <= 1, `${m.overflow}px overflow`);
       check(`${label}: no script errors`, errors.length === 0, errors.join("; "));
       check(`${label}: purchase bar visible`, m.barVisible);
+      check(`${label}: price shown`, m.priceVisible);
       if (label === "desktop") {
         check("business name in title and heading", m.title.includes(brief.businessName) && m.h1.includes(brief.businessName));
         check("noindex set", /noindex/.test(m.robots));
@@ -48,7 +50,10 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
         check("contact form disabled for preview", m.forms.every((f: any) => f.preview === "true" && !f.action));
         check("purchase link tied to this prospect", m.buy === purchaseUrl, m.buy);
         // Service words are allowed only when they appear in the verified services list.
-        const verified = brief.services.join(" ").toLowerCase();
+        // Customer review text is excluded above: it is attributed to its author, not claimed by us.
+        const lic = brief.license;
+        const verified = [brief.services.join(" "), lic ? "licensed" : "", lic?.bonded ? "bonded" : "", lic?.insured ? "insured" : ""]
+          .join(" ").toLowerCase();
         const bad = [...m.siteText.matchAll(new RegExp(UNSUPPORTED.source, "gi"))].map((x) => x[0])
           .find((w) => !verified.includes(w.toLowerCase()));
         check("no unsupported claims", !bad, bad);

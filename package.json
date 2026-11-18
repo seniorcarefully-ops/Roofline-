@@ -9,7 +9,8 @@
     "check": "tsc --noEmit",
     "test:stripe": "STRIPE_SANDBOX=1 NODE_USE_ENV_PROXY=1 vitest run test/billing.test.ts",
     "billing:setup": "NODE_USE_ENV_PROXY=1 tsx src/billing/setup.ts",
-    "cli": "NODE_USE_ENV_PROXY=1 tsx src/cli.ts"
+    "cli": "NODE_USE_ENV_PROXY=1 tsx src/cli.ts",
+    "serve": "NODE_USE_ENV_PROXY=1 tsx src/server/main.ts"
   },
   "dependencies": {
     "pg": "^8.23.1",

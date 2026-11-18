@@ -17,6 +17,9 @@ export const BuildBrief = z.object({
   rating: z.number().nullable(),
   reviewCount: z.number().int().nullable(),
   googleMapsUrl: z.string().url().nullable(),
+  placeId: z.string().nullable(),
+  license: z.object({ number: z.string(), bonded: z.boolean().nullable(), insured: z.boolean().nullable() }).nullable(),
+  servicesSource: z.enum(["website", "category"]).nullable(), // category = Google says roofing_contractor
   sources: z.array(z.string()),            // URLs the facts came from
 });
 export type BuildBrief = z.infer<typeof BuildBrief>;

@@ -34,6 +34,11 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Pipeline with logged state transitions and revision cap (2) then exception.
 - First real preview: Stay Dry Solutions LLC approved. Visual design is functional but too plain; design upgrade is next.
 
+- WA L&I license enrichment (data.wa.gov, phone or exact-name match only): 50 active, 6 inactive (closed, not targeted), 16 not matched (no license claims), 33 Idaho (not yet checked). Owner first names stored for greetings.
+- Redesigned "ridge" template with complete sections: hero, trust bar, services, why-us (verified facts only), live Google reviews (only if rating >= 3.5; fetched at render, not stored; attributed), how it works, service area + map + hours, FAQ, estimate form (preview-disabled), purchase bar showing $150/month.
+- Preview server (`npm run serve`): unguessable token links; serves only reviewer-approved versions; noindex/no-store; /buy creates Stripe Checkout (verified 303 to checkout.stripe.com in sandbox); Stripe webhook endpoint with signature verification. Not yet hosted publicly.
+- Image policy: use the business's own photos only when they show the owner/crew (not stock); otherwise Roofline artwork. Not yet implemented.
+
 Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, live-mode Stripe.
 
 ## Connections

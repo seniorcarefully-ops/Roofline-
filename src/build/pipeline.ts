@@ -1,16 +1,19 @@
+import { randomBytes } from "node:crypto";
 import { join } from "node:path";
 import type pg from "pg";
 import { NicheConfig } from "../niches/schema.js";
 import { transition } from "../state.js";
 import { assembleBrief } from "./assemble.js";
 import { renderRidge, writePreview } from "./render.js";
+import { fetchLiveReviews } from "./reviews.js";
 import { reviewPreview } from "./review.js";
 
 export const PREVIEW_DIR = process.env.PREVIEW_DIR ?? join(process.cwd(), "data", "previews");
 export const APP_BASE_URL = process.env.APP_BASE_URL ?? "http://localhost:3000";
 export const MAX_REVISIONS = 2;
 
-export const purchaseUrlFor = (prospectId: number, version: number) => `${APP_BASE_URL}/p/${prospectId}/v${version}/buy`;
+export const previewUrlFor = (token: string) => `${APP_BASE_URL}/p/${token}`;
+export const purchaseUrlFor = (token: string) => `${APP_BASE_URL}/p/${token}/buy`;
 
 /** Build one preview version, review it independently, and move it to ready_to_send or changes_requested. */
 export async function buildAndReview(pool: pg.Pool, prospectId: number) {
@@ -27,11 +30,14 @@ export async function buildAndReview(pool: pg.Pool, prospectId: number) {
 
   const version = Number((await pool.query(`SELECT COALESCE(MAX(version),0)+1 v FROM previews WHERE prospect_id=$1`, [prospectId])).rows[0].v);
   const brief = await assembleBrief(pool, prospectId, version);
-  const buy = purchaseUrlFor(prospectId, version);
-  const out = await writePreview(join(PREVIEW_DIR, String(prospectId), `v${version}`), renderRidge(brief, brand, buy));
+  const token = randomBytes(16).toString("base64url");
+  const buy = purchaseUrlFor(token);
+  const live = brief.placeId ? await fetchLiveReviews(brief.placeId).catch(() => null) : null;
+  // The static file is the reviewed snapshot; the server re-renders with fresh live reviews.
+  const out = await writePreview(join(PREVIEW_DIR, String(prospectId), `v${version}`), renderRidge(brief, brand, { purchaseUrl: buy, live }));
   const pv = await pool.query(
-    `INSERT INTO previews(prospect_id, version, url, content_hash) VALUES ($1,$2,$3,$4) RETURNING id`,
-    [prospectId, version, out.path, out.hash]);
+    `INSERT INTO previews(prospect_id, version, url, content_hash, brief, token) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+    [prospectId, version, previewUrlFor(token), out.hash, JSON.stringify(brief), token]);
   await transition(pool, prospectId, "website_state", "reviewing", "builder", { version, sources: brief.sources });
 
   const r = await reviewPreview(out.path, brief, buy);
@@ -45,5 +51,5 @@ export async function buildAndReview(pool: pg.Pool, prospectId: number) {
     await transition(pool, prospectId, "website_state", "changes_requested", "auto-reviewer",
       { failed: r.checks.filter((c) => !c.pass) });
   }
-  return { verdict: r.verdict, version, path: out.path, checks: r.checks };
+  return { verdict: r.verdict, version, url: previewUrlFor(token), file: out.path, checks: r.checks };
 }
