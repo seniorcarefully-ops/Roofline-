@@ -122,7 +122,7 @@ Confirmed direction (Micah):
 - AI SMS is both our sales assistant and the $200/month product; build one engine on Twilio + Claude, reused for both.
 - Post-purchase domain connection is one step via Entri Connect (assisted fallback for unsupported providers).
 - Customer portal: simple, clean; self-serve site updates with visible results; manage subscriptions and add/remove upsells (Stripe Customer Portal).
-- Roofline public phone number: calls go to voicemail, then the AI SMS assistant follows up, demonstrating the upsell. Approved as a good idea.
+- Brand phone number per niche: calls go to voicemail, then the AI SMS assistant follows up, demonstrating the upsell. Each niche brand gets its own number, greeting, and AI knowledge from its niche configuration; existing conversations keep the brand they started under.
 - Growth is self-funding: after the jumpstart, acquisition spend is capped at a share of collected revenue.
 
 PROPOSED, awaiting approval:
@@ -400,6 +400,8 @@ Target a complete small pilot before thousands of emails per month. The pilot si
 
 - Jumpstart: fixed acquisition budget (proposed $300/month) until 10 paying subscribers or 90 days.
 - After jumpstart: monthly acquisition spend <= 30% of trailing-30-day collected revenue.
+- Acquisition spend covers cold email infrastructure and data, plus retargeting. Proposed split once retargeting is live: up to 70% cold email/data, up to 30% retargeting; the strategy agent may shift within the cap based on measured cost per customer.
+- Retargeting channels: paid ads (Meta, Google) to roofers who opened a preview or the audit page (pixel on preview/opt-in pages, disclosed); free email follow-up within the approved sequence; SMS only to people with recorded consent. Each retargeting campaign has its own budget, frequency cap, and stop rules (purchase, opt-out, rejection).
 - Scale-up gates (all required): cost to acquire a customer <= 3 months of its revenue; monthly cancellations < 8%; email bounce < 2% and spam complaints < 0.1%.
 - If a gate fails, spend freezes at the current level and the owner is notified. Every automated purchase is logged.
 
