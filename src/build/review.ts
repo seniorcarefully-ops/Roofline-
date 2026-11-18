@@ -25,24 +25,25 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.goto(pathToFileURL(htmlPath).href);
-      // Scroll through so lazy images load, then wait for the network to settle.
-      await page.evaluate(`(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); } window.scrollTo(0, 0); })()`);
+      // Load every image now (lazy images far from the viewport may never start
+      // in a headless check), then wait (max 20s) for each to load or fail.
+      await page.evaluate(`Array.from(document.images).forEach(function(i){ i.loading = "eager"; })`);
       await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
-      // Wait (max 15s) for every image to finish loading or fail, so slow photos are not misjudged.
-      await page.evaluate(`Promise.race([Promise.all(Array.from(document.images).map(function(i){ return i.complete ? 0 :
+      const settle = `Promise.race([Promise.all(Array.from(document.images).map(function(i){ return i.complete ? 0 :
         new Promise(function(r){ i.addEventListener("load", r); i.addEventListener("error", r); }); })),
-        new Promise(function(r){ setTimeout(r, 15000); })])`);
-      // Retry failed images once (transient network errors), then judge.
-      await page.evaluate(`Promise.all(Array.from(document.images).filter(function(i){ return i.complete && !i.naturalWidth; }).map(function(i){
-        return new Promise(function(r){ i.addEventListener("load", r); i.addEventListener("error", r); setTimeout(r, 15000);
-          var s = i.currentSrc || i.src; i.removeAttribute("srcset"); i.src = s + (s.indexOf("?") < 0 ? "?" : "&") + "retry=1"; }); }))`);
+        new Promise(function(r){ setTimeout(r, 20000); })])`;
+      await page.evaluate(settle);
+      // Retry images that errored once (transient network failures), then judge.
+      await page.evaluate(`Array.from(document.images).filter(function(i){ return i.complete && !i.naturalWidth; }).forEach(function(i){
+        var s = i.currentSrc || i.src; i.removeAttribute("srcset"); i.src = s + (s.indexOf("?") < 0 ? "?" : "&") + "retry=1"; })`);
+      await page.evaluate(settle);
       const m = await page.evaluate(`({
         overflow: document.documentElement.scrollWidth - window.innerWidth,
         title: document.title,
         h1: (document.querySelector(".logo")||{}).innerText || "",
         robots: (document.querySelector('meta[name=robots]')||{}).content || "",
         tels: Array.from(document.querySelectorAll('a[href^="tel:"]')).map(function(a){return a.getAttribute("href")}),
-        imgsBroken: Array.from(document.images).filter(function(i){return !i.complete || i.naturalWidth===0}).length,
+        imgsBroken: Array.from(document.images).filter(function(i){return !i.complete || i.naturalWidth===0}).map(function(i){return (i.currentSrc||i.src).slice(0,90)}),
         siteText: (function(){ var m=(document.querySelector("main")||document.body).cloneNode(true); var r=m.querySelector("#reviews .revs"); if(r) r.remove(); return m.innerText + " " + document.querySelector("footer").innerText; })(),
         priceVisible: ((x) => x.indexOf("$150/month") >= 0)((document.querySelector('#rl-bar')||{}).innerText||""),
         forms: Array.from(document.forms).map(function(f){return {preview: f.dataset.preview, action: f.getAttribute("action")}}),
@@ -56,7 +57,7 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       if (label === "desktop") {
         check("business name in title and header", m.title.includes(brief.businessName) && m.h1.includes(brief.businessName));
         check("noindex set", /noindex/.test(m.robots));
-        check("no broken images", m.imgsBroken === 0, `${m.imgsBroken} broken`);
+        check("no broken images", m.imgsBroken.length === 0, `${m.imgsBroken.length} broken: ${m.imgsBroken.join(" | ")}`);
         const telsOk = brief.phoneE164 ? m.tels.length > 0 && m.tels.every((t: string) => t === `tel:${brief.phoneE164}`) : m.tels.length === 0;
         check("tap-to-call matches verified phone", telsOk, `found ${m.tels.join(",")}`);
         check("contact form disabled for preview", m.forms.every((f: any) => f.preview === "true" && !f.action));
