@@ -156,3 +156,33 @@ describe("sms consent", () => {
     expect(toE164("123")).toBeNull();
   });
 });
+
+import { renderNoWebsiteEmail, LOCKED_NO_SITE_BODY } from "../src/outreach/template.js";
+describe("no-website email", () => {
+  it("renders approved wording with verified listing facts", () => {
+    const e = renderNoWebsiteEmail({ company: "Acme Roofing", firstName: null, reviewCount: 12, rating: 4.6, senderName: "Micah" });
+    expect(e.subject).toBe("A website for Acme Roofing");
+    expect(e.body).toContain("Hi Acme Roofing team,");
+    expect(e.body).toContain("You have 12 reviews averaging 4.6 stars, but no website linked to your listing");
+    expect(e.body.split("\n").length).toBe(LOCKED_NO_SITE_BODY.split("\n").length);
+  });
+  it("refuses unverified or thin data", () => {
+    expect(() => renderNoWebsiteEmail({ company: "A", firstName: null, reviewCount: 3, rating: 5, senderName: "M" })).toThrow();
+  });
+  it("gate uses listing facts instead of audit, still needs approved preview", async () => {
+    const v = await publishNicheVersion(pool, roofing);
+    const id = Number((await pool.query(`INSERT INTO prospects(niche_version_id, business_name, outreach_template,
+      google_rating, google_review_count, contact_email, contact_verified) VALUES ($1,'NoSite Roofing','no_website',4.7,20,'a@b.test',true)
+      RETURNING id`, [v])).rows[0].id);
+    let g = await checkInitialEmailGate(pool, id);
+    expect(g.ok).toBe(false);
+    expect(g.reasons.join()).toMatch(/not ready_to_send/);
+    await pool.query(`UPDATE settings SET outreach_paused=false`);
+    await transition(pool, id, "prospect_state", "qualified", "t");
+    for (const s of ["build_queued", "building", "reviewing", "approved", "ready_to_send"]) await transition(pool, id, "website_state", s, "t");
+    const pv = await pool.query(`INSERT INTO previews(prospect_id, version, content_hash) VALUES ($1,1,'h') RETURNING id`, [id]);
+    await pool.query(`INSERT INTO reviews(preview_id, verdict, checks, reviewer) VALUES ($1,'approved','{}','r')`, [pv.rows[0].id]);
+    g = await checkInitialEmailGate(pool, id);
+    expect(g).toMatchObject({ ok: true, template: "no_website" });
+  });
+});

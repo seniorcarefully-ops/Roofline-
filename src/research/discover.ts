@@ -7,10 +7,10 @@ export interface DiscoverResult { found: number; inserted: number; skipped: Reco
 /** Pure fit check against niche criteria. Returns a skip reason or null. */
 export function fitReason(p: Place, c: { placeTypes: string[]; minRating: number; minReviews: number }): string | null {
   if (p.status && p.status !== "OPERATIONAL") return "not_operational";
-  if (!p.website) return "no_website";
   if (!p.types.some((t) => c.placeTypes.includes(t))) return "wrong_type";
   if ((p.rating ?? 0) < c.minRating) return "low_rating";
   if (p.reviews < c.minReviews) return "few_reviews";
+  if (!p.website) return "no_website";
   return null;
 }
 
@@ -26,12 +26,14 @@ export async function discover(pool: pg.Pool, area: string, maxPages = 3): Promi
   const res: DiscoverResult = { found: seen.size, inserted: 0, skipped: {} };
   for (const p of seen.values()) {
     const why = fitReason(p, crit);
-    if (why) { res.skipped[why] = (res.skipped[why] ?? 0) + 1; continue; }
-    const site = cleanUrl(p.website!);
+    if (why && why !== "no_website") { res.skipped[why] = (res.skipped[why] ?? 0) + 1; continue; }
+    const site = p.website ? cleanUrl(p.website) : null;
     const r = await pool.query(
-      `INSERT INTO prospects(niche_version_id, business_name, website_url, normalized_domain, place_id, phone, address, service_area)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT DO NOTHING RETURNING id`,
-      [niche.id, p.name, site, normalizeDomain(site), p.id, p.phone, p.address, area],
+      `INSERT INTO prospects(niche_version_id, business_name, website_url, normalized_domain, place_id, phone, address,
+         service_area, outreach_template, google_rating, google_review_count)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT DO NOTHING RETURNING id`,
+      [niche.id, p.name, site, normalizeDomain(site), p.id, p.phone, p.address, area,
+        site ? "website_audit" : "no_website", p.rating, p.reviews],
     );
     if (r.rowCount) {
       res.inserted++;

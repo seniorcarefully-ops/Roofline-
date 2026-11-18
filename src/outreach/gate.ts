@@ -5,6 +5,7 @@ export interface GateResult {
   ok: boolean;
   reasons: string[];
   findings?: [string, string, string];
+  template?: "website_audit" | "no_website";
 }
 
 /**
@@ -46,6 +47,15 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
   );
   if (rev.rows[0]?.verdict !== "approved") reasons.push("latest preview not approved by reviewer");
 
+  if (p.outreach_template === "no_website") {
+    // No audit: the email instead states verified Google listing facts.
+    if (p.website_url) reasons.push("prospect has a website; no_website template does not apply");
+    if (!(p.google_review_count >= 5) || p.google_rating == null) reasons.push("verified Google rating/reviews missing");
+    const already = await db.query(`SELECT 1 FROM messages WHERE idempotency_key = $1`, [`initial_email:${prospectId}`]);
+    if (already.rowCount) reasons.push("initial email already sent");
+    return { ok: reasons.length === 0, reasons, template: "no_website" };
+  }
+
   const doc = await db.query(`SELECT 1 FROM audit_documents WHERE prospect_id = $1`, [prospectId]);
   if (!doc.rowCount) reasons.push("no audit attachment");
 
@@ -67,5 +77,5 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
 
   return reasons.length
     ? { ok: false, reasons }
-    : { ok: true, reasons, findings: [phrase.get(f[0]!)!, phrase.get(f[1]!)!, phrase.get(f[2]!)!] };
+    : { ok: true, reasons, template: "website_audit", findings: [phrase.get(f[0]!)!, phrase.get(f[1]!)!, phrase.get(f[2]!)!] };
 }

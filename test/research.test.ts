@@ -49,6 +49,7 @@ describe("discovery helpers", () => {
   it("fit rules", () => {
     expect(fitReason(p, crit)).toBeNull();
     expect(fitReason({ ...p, website: null }, crit)).toBe("no_website");
+    expect(fitReason({ ...p, website: null, reviews: 2 }, crit)).toBe("few_reviews");
     expect(fitReason({ ...p, reviews: 2 }, crit)).toBe("few_reviews");
     expect(fitReason({ ...p, status: "CLOSED_PERMANENTLY" }, crit)).toBe("not_operational");
   });

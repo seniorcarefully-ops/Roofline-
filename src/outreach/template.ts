@@ -42,3 +42,38 @@ export function renderInitialEmail(v: EmailVars): { subject: string; body: strin
   if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
   return out;
 }
+
+/**
+ * LOCKED email for businesses with no website (approved by Micah 2026-11-18).
+ * [N] and [Rating] come only from the business's Google listing.
+ */
+export const LOCKED_NO_SITE_SUBJECT = "A website for [Company]";
+export const LOCKED_NO_SITE_BODY = `Hi [First Name],
+
+I came across [Company] on Google. You have [N] reviews averaging [Rating] stars, but no website linked to your listing, so homeowners who find you there can\u2019t see your services or request an estimate online.
+
+I went ahead and built a website for [Company] using your public business information.
+
+Just reply with your cell number and permission to text you the preview. No obligation.
+
+\u2014[Name]`;
+
+export interface NoSiteVars {
+  company: string;
+  firstName: string | null;
+  reviewCount: number;
+  rating: number;
+  senderName: string;
+}
+
+export function renderNoWebsiteEmail(v: NoSiteVars): { subject: string; body: string } {
+  if (!v.company.trim() || !v.senderName.trim()) throw new Error("missing company or sender");
+  if (!Number.isInteger(v.reviewCount) || v.reviewCount < 5) throw new Error("need at least 5 verified reviews");
+  if (!(v.rating >= 1 && v.rating <= 5)) throw new Error("invalid rating");
+  const greeting = v.firstName?.trim() || GREETING_FALLBACK(v.company);
+  const fill = (s: string) => s.replaceAll("[Company]", v.company).replaceAll("[First Name]", greeting)
+    .replace("[N]", String(v.reviewCount)).replace("[Rating]", v.rating.toFixed(1)).replaceAll("[Name]", v.senderName);
+  const out = { subject: fill(LOCKED_NO_SITE_SUBJECT), body: fill(LOCKED_NO_SITE_BODY) };
+  if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
+  return out;
+}

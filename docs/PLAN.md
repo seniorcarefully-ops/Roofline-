@@ -1,7 +1,7 @@
 # Automated Website Business — Living Plan & Claude Handoff
 
-**Document version:** 1.0 — consolidated plan  
-**Updated:** November 17, 2026 (America/Los_Angeles)  
+**Document version:** 1.1  
+**Updated:** November 18, 2026 (America/Los_Angeles)  
 **Stage:** Planning. Implementation is not authorized by this document.  
 **First niche:** Roofing. Architecture must support selecting other niches.  
 **Purpose:** One editable source of truth for the business, offers, acquisition workflow, agent responsibilities, requirements, decisions, and implementation roadmap.
@@ -130,6 +130,22 @@ Operational requirements:
 - Since this email says the site has already been built, an actual built and reviewed preview is a send prerequisite. No email may assert a nonexistent preview exists.
 
 **Timing resolution:** Earlier brainstorming proposed building only after a phone opt-in. The newly locked email requires building before the initial email. The working flow therefore builds and reviews before outreach. If Micah chooses build-after-opt-in instead, explicitly resolve the conflict and obtain approval for corresponding truthful email wording; do not silently change either decision.
+
+### 6.1 LOCKED: no-website variant (approved November 18, 2026)
+
+Used only for businesses whose Google listing has no website and at least 5 reviews. [N] and [Rating] come only from the Google listing. No audit attachment. The prebuilt, reviewed preview requirement still applies.
+
+**Subject: A website for [Company]**
+
+Hi [First Name],
+
+I came across [Company] on Google. You have [N] reviews averaging [Rating] stars, but no website linked to your listing, so homeowners who find you there can’t see your services or request an estimate online.
+
+I went ahead and built a website for [Company] using your public business information.
+
+Just reply with your cell number and permission to text you the preview. No obligation.
+
+—[Name]
 
 ## 7. Main acquisition journey
 
@@ -383,6 +399,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 18, 2026 | Approved and locked the no-website email variant (6.1). Confirmed continuous outreach improvement through approved, controlled experiments measured on purchases and retention. Implementation authorized and under way; see STATUS.md. |
 | November 17, 2026 | Consolidated subsequent decisions into this living plan: $150 website, $200 SMS, unified $500 marketing; niche-specific main-site switching; agent roles, audit/email/SMS/preview journey, review queues, value reporting, domain connection, customer operations, roadmap, and planning-only Claude handoff. Locked exact approved email and removed “Want to see it?”; made its prebuilt-preview requirement explicit. |
 
 ## Implementation references
