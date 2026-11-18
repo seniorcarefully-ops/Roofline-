@@ -8,10 +8,14 @@ import { inspectSite } from "../src/research/inspect.js";
 import { fitReason } from "../src/research/discover.js";
 import { cleanUrl, normalizeDomain } from "../src/research/places.js";
 
-const BAD = `<html><body style="margin:0"><div style="width:1200px">Acme Roofing. Call (509) 555-0100.
+const BAD = `<html><body style="margin:0"><div style="width:1200px;font-size:10px">Acme Roofing. Call (509) 555-0100.
+  <p>We install and repair all kinds of roofs across the region.</p><p>Family owned and operated for many years now.</p>
+  <p>Shingle, metal, and flat roofing systems for homes.</p><p>Gutters, skylights, and attic ventilation upgrades.</p>
+  <p>&copy; 2016 Acme Roofing. All rights reserved here.</p>
   <a href="/missing">Gallery</a></div></body></html>`;
 const GOOD = `<html><head><meta name="viewport" content="width=device-width"></head><body>
-  <a href="tel:+15095550100">Call now</a> <a href="/estimate">Get a free estimate</a></body></html>`;
+  <a href="tel:+15095550100">Call now</a> <a href="/estimate">Get a free estimate</a>
+  <p>Read our 5-star customer reviews.</p> <p>&copy; 2026 Acme</p></body></html>`;
 
 let server: Server; let base: string;
 beforeAll(async () => {
@@ -31,7 +35,7 @@ describe("inspector", () => {
     const r = await inspectSite(`${base}/bad`, await mkdtemp(join(tmpdir(), "ev-")), b);
     await b.close();
     const codes = r.findings.map((f) => f.code).sort();
-    expect(codes).toEqual(["broken_links", "mobile_overflow", "no_estimate_cta", "no_https", "no_tap_to_call"]);
+    expect(codes).toEqual(["broken_links", "mobile_overflow", "no_estimate_cta", "no_https", "no_reviews_shown", "no_tap_to_call", "small_text", "stale_copyright"]);
     expect(r.findings.every((f) => f.evidencePath.endsWith(".png"))).toBe(true);
   });
   it("does not invent problems on a good page (aside from local http)", async () => {

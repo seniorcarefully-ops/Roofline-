@@ -25,7 +25,8 @@ export async function confirmedNoDns(hostname: string): Promise<boolean> {
 
 const ESTIMATE = /(free\s+)?(estimate|quote|inspection|bid)/i;
 
-interface PageMetrics { telCount: number; ctaCount: number; overflow: number; viewportMeta: boolean; links: string[] }
+interface PageMetrics { telCount: number; ctaCount: number; overflow: number; viewportMeta: boolean; links: string[];
+  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number }
 
 // Runs inside the page. Plain JS string so bundlers cannot inject helpers.
 const PAGE_METRICS = `function (estimateSrc) {
@@ -43,7 +44,22 @@ const PAGE_METRICS = `function (estimateSrc) {
       try { var u = new URL(h); if (u.hostname !== host || !/^https?:$/.test(u.protocol) || seen[h]) return false; seen[h] = 1; return true; }
       catch (e) { return false; }
     }).slice(0, 25);
+  var text = document.body ? document.body.innerText : "";
+  var years = [], re = /(?:\\u00a9|&copy;|copyright)\\s*(?:\\d{4}\\s*[-\\u2013]\\s*)?(\\d{4})/gi, mm;
+  while ((mm = re.exec(text))) years.push(parseInt(mm[1], 10));
+  var revRe = /(testimonial|reviews?\\b|what (our )?(customers|clients) say|\\u2605)/i;
+  var reviewsShown = revRe.test(text) || Array.from(document.querySelectorAll("a[href]")).some(function (a) {
+    return /(review|testimonial)/i.test((a.getAttribute("href") || "") + " " + (a.textContent || ""));
+  });
+  var small = 0, total = 0, walker = document.createTreeWalker(document.body || document, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    var n = walker.currentNode, el = n.parentElement;
+    if (!el || n.textContent.trim().length < 20 || !visible(el)) continue;
+    total++; if (parseFloat(getComputedStyle(el).fontSize) < 12) small++;
+  }
   return { telCount: tel.length, ctaCount: ctas.length,
+    copyrightYear: years.length ? Math.max.apply(null, years) : null, reviewsShown: reviewsShown,
+    smallTextRatio: total ? small / total : 0, textNodes: total,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
     viewportMeta: !!document.querySelector('meta[name="viewport"]'), links: links };
 }`;
@@ -59,6 +75,8 @@ async function inspectOne(url: string, outDir: string, browser?: Browser): Promi
   const ctx = await b.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const findings: Finding[] = [];
+  let bytes = 0;
+  page.on("response", (r) => { const l = Number(r.headers()["content-length"]); if (l > 0) bytes += l; });
   try {
     let res;
     try {
@@ -88,6 +106,16 @@ async function inspectOne(url: string, outDir: string, browser?: Browser): Promi
       add("mobile_overflow", m.viewportMeta
         ? `Page is ${m.overflow}px wider than an iPhone screen, causing sideways scrolling.`
         : "Page has no mobile viewport setting, so phones show a shrunken desktop layout.");
+
+    const year = new Date().getFullYear();
+    if (m.copyrightYear && m.copyrightYear <= year - 3)
+      add("stale_copyright", `Footer copyright says ${m.copyrightYear}, suggesting the site has not been updated in years.`, full);
+    if (!m.reviewsShown)
+      add("no_reviews_shown", "No customer reviews or testimonials appear on the homepage.", full);
+    if (m.textNodes >= 5 && m.smallTextRatio >= 0.4)
+      add("small_text", `${Math.round(m.smallTextRatio * 100)}% of text blocks are smaller than 12px on a phone, hard to read without zooming.`);
+    if (bytes > 6_000_000)
+      add("heavy_page", `Homepage downloads ${(bytes / 1e6).toFixed(1)} MB, slow on mobile data.`);
 
     const broken: string[] = [];
     for (const l of m.links) {

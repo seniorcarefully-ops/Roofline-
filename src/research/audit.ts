@@ -3,7 +3,7 @@ import type pg from "pg";
 import { inspectSite, launchBrowser } from "./inspect.js";
 
 /** Bump when checks change; prospects are re-audited under the new version. */
-export const AUDIT_VERSION = 3;
+export const AUDIT_VERSION = 5;
 
 export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "data", "evidence");
 

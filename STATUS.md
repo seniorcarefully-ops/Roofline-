@@ -25,6 +25,15 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - No-website email variant approved and locked (`renderNoWebsiteEmail`); send gate uses verified Google rating/reviews instead of an audit and still requires an approved preview. Discovery now stores no-website businesses (5+ reviews) as `no_website` prospects.
 - Finding: with only objective checks, few established roofers have 3 problems. Targeting/checks need a decision (see owner questions).
 
+- Audit v4 added: stale copyright, no reviews/testimonials shown, small text, heavy page (>6 MB). Region run (Spokane + 8 nearby towns): 105 prospects (96 with sites, 9 without); 8 reached 3+ verified findings; 15 unreachable. v5 tightens the reviews check to also accept a reviews/testimonials page link (re-audit pending).
+
+## Phase 2b: Builder and reviewer (in progress)
+- Brief from a fresh Google listing lookup (name, phone, city, hours, rating, maps link). Services/service area are empty unless verified.
+- One-page "ridge" template: noindex, preview-only disabled form, separate Roofline purchase bar ($150/mo) tied to prospect+version.
+- Independent automated reviewer (mobile + desktop): overflow, script errors, purchase bar, name, noindex, images, tap-to-call equals verified phone, form disabled, purchase link, unsupported claims (service words allowed only if verified), rating matches listing.
+- Pipeline with logged state transitions and revision cap (2) then exception.
+- First real preview: Stay Dry Solutions LLC approved. Visual design is functional but too plain; design upgrade is next.
+
 Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, live-mode Stripe.
 
 ## Connections
