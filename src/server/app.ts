@@ -7,6 +7,10 @@ import { APP_BASE_URL, purchaseUrlFor } from "../build/pipeline.js";
 import { renderRidge } from "../build/render.js";
 import { fetchLiveReviews } from "../build/reviews.js";
 import { NicheConfig } from "../niches/schema.js";
+import { activeNiche } from "../niches/registry.js";
+import { stripe } from "../billing/stripe.js";
+import { canceledPage, messagePage, successPage, type Brand } from "./pages.js";
+import { previewUrlFor } from "../build/pipeline.js";
 
 const send = (res: ServerResponse, status: number, body: string, type = "text/html; charset=utf-8", extra: Record<string, string> = {}) => {
   res.writeHead(status, { "Content-Type": type, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin", ...extra });
@@ -35,6 +39,11 @@ async function approvedPreview(pool: pg.Pool, token: string) {
   return row;
 }
 
+const FALLBACK_BRAND: Brand = { name: "Roofline", domain: null, colors: { primary: "#1F2A37", accent: "#E4572E" }, tagline: "Websites built for roofing companies." };
+async function currentBrand(pool: pg.Pool): Promise<Brand> {
+  return (await activeNiche(pool).catch(() => null))?.config.brand ?? FALLBACK_BRAND;
+}
+
 export function createApp(pool: pg.Pool) {
   return createServer(async (req, res) => {
     try {
@@ -45,7 +54,7 @@ export function createApp(pool: pg.Pool) {
 
       if (req.method === "GET" && m && !m[2]) {
         const pv = await approvedPreview(pool, m[1]!);
-        if (!pv) return send(res, 404, page("Not found", "This preview link is not available."));
+        if (!pv) return send(res, 404, messagePage(await currentBrand(pool), "Not found", "This link isn't available.", "The preview may have been replaced with a newer version."));
         const brief = BuildBrief.parse(pv.brief);
         const live = brief.placeId ? await fetchLiveReviews(brief.placeId).catch(() => null) : null;
         const html = renderRidge(brief, NicheConfig.parse(pv.config).brand, { purchaseUrl: purchaseUrlFor(pv.token), live });
@@ -56,18 +65,38 @@ export function createApp(pool: pg.Pool) {
 
       if (req.method === "GET" && m && m[2]) {
         const pv = await approvedPreview(pool, m[1]!);
-        if (!pv) return send(res, 404, page("Not found", "This preview link is not available."));
-        if (pv.prospect_state === "closed") return send(res, 410, page("Not available", "This offer is no longer available."));
-        if (pv.prospect_state === "purchased") return send(res, 200, page("Already purchased", "This site has already been purchased. Check your email for next steps."));
+        if (!pv) return send(res, 404, messagePage(await currentBrand(pool), "Not found", "This link isn't available.", "The preview may have been replaced with a newer version."));
+        const pBrand = NicheConfig.parse(pv.config).brand;
+        if (pv.prospect_state === "closed") return send(res, 410, messagePage(pBrand, "Not available", "This offer is no longer available.", "This preview is no longer open for purchase."));
+        if (pv.prospect_state === "purchased") return send(res, 200, messagePage(pBrand, "Already purchased", "This site is already yours.", "Your subscription is active. Check your email for next steps.", previewUrlFor(pv.token)));
         const co = await createCheckout({ service: "website", prospectId: pv.prospect_id, previewVersion: pv.version,
-          email: pv.contact_email, baseUrl: APP_BASE_URL });
+          email: pv.contact_email, baseUrl: APP_BASE_URL, previewToken: pv.token });
         return send(res, 303, "", "text/plain", { Location: co.url });
       }
 
-      if (req.method === "GET" && url.pathname === "/purchase/success")
-        return send(res, 200, page("You're all set", "Thanks! Your subscription is active. We'll text or email you shortly to confirm your details and connect your domain."));
-      if (req.method === "GET" && url.pathname === "/purchase/canceled")
-        return send(res, 200, page("No problem", "Checkout was canceled and you were not charged. Your preview link still works."));
+      if (req.method === "GET" && url.pathname === "/purchase/success") {
+        const sid = url.searchParams.get("session_id") ?? "";
+        let info = { business: null as string | null, email: null as string | null, amount: null as string | null, previewUrl: null as string | null };
+        let brand = await currentBrand(pool);
+        if (/^cs_(test|live)_[A-Za-z0-9]+$/.test(sid)) {
+          const cs = await stripe("GET", `/v1/checkout/sessions/${sid}`).catch(() => null);
+          if (cs && cs.status === "complete") {
+            const p = cs.client_reference_id ? (await pool.query(
+              `SELECT p.business_name, v.config FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id WHERE p.id = $1`,
+              [Number(cs.client_reference_id)])).rows[0] : null;
+            if (p) brand = NicheConfig.parse(p.config).brand;
+            info = { business: p?.business_name ?? null, email: cs.customer_details?.email ?? null,
+              amount: cs.amount_total != null ? `$${(cs.amount_total / 100).toFixed(0)}` : null,
+              previewUrl: cs.metadata?.preview_token ? previewUrlFor(cs.metadata.preview_token) : null };
+          }
+        }
+        return send(res, 200, successPage(brand, info), undefined, { "Cache-Control": "no-store" });
+      }
+      if (req.method === "GET" && url.pathname === "/purchase/canceled") {
+        const t = url.searchParams.get("t");
+        const valid = t && /^[A-Za-z0-9_-]{16,64}$/.test(t) ? await approvedPreview(pool, t) : null;
+        return send(res, 200, canceledPage(valid ? NicheConfig.parse(valid.config).brand : await currentBrand(pool), valid ? previewUrlFor(valid.token) : null));
+      }
 
       if (req.method === "POST" && url.pathname === "/stripe/webhook") {
         const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -78,10 +107,10 @@ export function createApp(pool: pg.Pool) {
         return send(res, 200, "ok", "text/plain");
       }
 
-      return send(res, 404, page("Not found", "Nothing here."));
+      return send(res, 404, messagePage(await currentBrand(pool), "Not found", "Page not found.", "This page doesn't exist."));
     } catch (e) {
       console.error("request failed:", e instanceof Error ? e.message : e);
-      if (!res.headersSent) send(res, 500, page("Something went wrong", "Please try again in a moment."));
+      if (!res.headersSent) send(res, 500, messagePage(FALLBACK_BRAND, "Something went wrong", "Something went wrong.", "Please try again in a moment."));
     }
   });
 }

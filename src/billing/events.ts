@@ -66,6 +66,9 @@ export async function handleEvent(pool: pg.Pool, event: any): Promise<boolean> {
           const st = p.rows[0]?.prospect_state;
           if (st === "contacted" || st === "interested")
             await transition(c, pid, "prospect_state", "purchased", "stripe", { session: o.id });
+          // Onboarding starts now; until it is automated, it is an owner task.
+          await c.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('prospect',$1,$2)`,
+            [String(pid), `new customer: start onboarding (checkout ${o.id}, livemode=${o.livemode})`]);
           // Stop prospecting sequences: cancel queued outreach jobs for this prospect.
           await c.query(
             `UPDATE jobs SET status = 'done', last_error = 'canceled: purchased', updated_at = now()
