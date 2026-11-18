@@ -16,6 +16,7 @@ export const roofing: NicheConfig = {
   },
   audit: {
     priorities: [
+      { code: "listing_link_broken", phrase: "a working website link on your Google listing" },
       { code: "no_tap_to_call", phrase: "a tap-to-call button on mobile" },
       { code: "no_estimate_cta", phrase: "a clear way to request an estimate" },
       { code: "mobile_overflow", phrase: "a layout that fits phone screens" },

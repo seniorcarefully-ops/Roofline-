@@ -18,6 +18,12 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Event processing exactly once: checkout completion marks prospect purchased and cancels queued outreach jobs; subscription create/update/delete mirrored; failed payment opens an exception.
 - Webhook signature verification; event polling sync works without a public URL.
 
+## Phase 2: Research (in progress)
+- Discovery (`npm run cli -- discover "<area>"`): Google Places search with niche terms, fit rules (operational, has website, roofing type, rating >= 3.5, reviews >= 5), dedupe by place id and domain. Live run, Spokane WA: 56 found, 38 stored.
+- Mobile inspector (`npm run cli -- audit`): iPhone viewport, read-only. Deterministic checks with screenshot evidence: tap-to-call, estimate/quote CTA, mobile overflow/no viewport, HTTPS, broken internal links, broken Google-listing link (only when Google public DNS confirms).
+- Audit v1/v2 produced false positives caused by sandbox DNS/proxy; discarded and logged. v3 results on 38 Spokane prospects: 0 reach 3 findings; Barton Roofing has 2 (verified by screenshot); 6 sites could not be checked (exceptions).
+- Finding: with only objective checks, few established roofers have 3 problems. Targeting/checks need a decision (see owner questions).
+
 Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, live-mode Stripe.
 
 ## Connections
