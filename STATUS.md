@@ -47,7 +47,9 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Postgres `roofline-db` (basic_256mb, 15 GB disk). Web service `roofline` (Docker, Playwright image, Starter $7/mo) at https://roofline-56l1.onrender.com, auto-deploys from branch claude/nice-newton-8sjsb5. Health check passing; migrations run on start.
 - One-off jobs via Render Jobs API work (pipeline commands run on Render, not in a chat session).
 - Stripe sandbox webhook endpoint created to /stripe/webhook; signing secret stored only as a Render env var.
-- Waiting: GOOGLE_PLACES_KEY and STRIPE_SECRET_KEY env vars on Render (owner adds in dashboard).
+- GOOGLE_PLACES_KEY and STRIPE_SECRET_KEY (sandbox) set on Render by owner.
+- Verified live 2026-11-18: Render jobs ran discover (Spokane: 42 stored), licenses, and build for First Rate Roofing (approved). Public preview serves with noindex, live Google reviews, license number, working map. /buy redirects to Stripe Checkout (sandbox). Stripe sandbox webhook delivered to production and accepted (pending_webhooks=0); test subscription/customer deleted afterwards.
+- Not verified: completing Checkout through the browser UI (Stripe blocks automated form fill); a human test-card purchase is still needed.
 - This sandbox cannot reach Render Postgres directly (HTTPS-only egress); all production data work runs as Render jobs.
 
 Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, live-mode Stripe.
