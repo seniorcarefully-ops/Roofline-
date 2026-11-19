@@ -149,7 +149,7 @@ ${navBar(brand)}
 </div></div></div></section>
 
 <section id="story" style="background:#fff"><div class="wrap story">
-<div class="portrait"><img src="/assets/cole.jpg" alt="${PERSONA.first}" onerror="this.remove()"><div class="ph"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21a8.5 8.5 0 0 1 17 0z"/></svg></div></div>
+<div class="portrait"><img src="/assets/cole.jpg" alt="${PERSONA.first} from ${esc(brand.name)}" width="960" height="1200" loading="lazy"><div class="ph"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21a8.5 8.5 0 0 1 17 0z"/></svg></div></div>
 <div><span class="kicker">Meet ${PERSONA.first}</span>
 <h2>${W === "Roofer" ? "Roofing runs in the family." : `${W}s run in the family.`}</h2>
 <p>${PERSONA.first}'s dad was a ${esc(w.one)}. So was his grandpa, and his great-grandpa before him.</p>

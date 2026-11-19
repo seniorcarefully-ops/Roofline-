@@ -55,6 +55,12 @@ export function createApp(pool: pg.Pool) {
       const m = url.pathname.match(/^\/p\/([A-Za-z0-9_-]{16,64})(\/buy)?\/?$/);
 
       if (req.method === "GET" && url.pathname === "/healthz") return send(res, 200, "ok", "text/plain");
+      if (req.method === "GET" && url.pathname === "/assets/cole.jpg") {
+        const { readFile } = await import("node:fs/promises");
+        const { fileURLToPath } = await import("node:url");
+        const img = await readFile(fileURLToPath(new URL("../assets/cole.jpg", import.meta.url)));
+        return send(res, 200, img as any, "image/jpeg", { "Cache-Control": "public, max-age=86400" });
+      }
 
       // Public brand site (indexable).
       if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
