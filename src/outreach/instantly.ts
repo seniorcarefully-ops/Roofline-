@@ -48,14 +48,15 @@ export async function ensureCampaign(niche: string): Promise<string> {
  * Push send-ready prospects into the campaign. Every lead must pass the
  * deterministic send gate; the rendered email includes the legal footer.
  */
-export async function queueLeads(pool: pg.Pool, opts: { minScore?: number; limit?: number } = {}) {
+export async function queueLeads(pool: pg.Pool, opts: { minScore?: number; limit?: number; niche?: string } = {}) {
   const minScore = opts.minScore ?? 60, limit = opts.limit ?? 50;
   const rows = (await pool.query(
     `SELECT p.*, v.config,
        (SELECT token FROM previews WHERE prospect_id = p.id ORDER BY version DESC LIMIT 1) AS token
      FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id
      WHERE p.website_state = 'ready_to_send' AND p.contact_verified AND p.fit_score >= $1
-     ORDER BY p.fit_score DESC, p.id LIMIT $2`, [minScore, limit])).rows;
+       AND ($3::text IS NULL OR v.niche_id = $3)
+     ORDER BY p.fit_score DESC, p.id LIMIT $2`, [minScore, limit, opts.niche ?? null])).rows;
   const out = { considered: rows.length, queued: 0, blocked: [] as { id: number; reasons: string[] }[] };
   const campaigns = new Map<string, string>();
   for (const p of rows) {

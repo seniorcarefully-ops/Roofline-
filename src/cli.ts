@@ -90,6 +90,7 @@ try {
     const out: any = await buildAndReview(pool, Number(r.rows[0].id));
     console.log(JSON.stringify({ business: r.rows[0].business_name, verdict: out.verdict, url: out.url, optin: out.url?.replace("/p/", "/s/"), failed: out.checks?.filter((c: any) => !c.pass) }));
   }
+  else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();

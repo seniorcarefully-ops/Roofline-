@@ -58,12 +58,13 @@ export async function verifyEmail(email: string): Promise<{ status: string; catc
   return { status: d.verification_status ?? "unknown", catchAll: !!d.catch_all };
 }
 
-export async function findEmails(pool: pg.Pool, limit = 50, opts: { verify?: boolean } = {}) {
+export async function findEmails(pool: pg.Pool, limit = 50, opts: { verify?: boolean; niche?: string } = {}) {
   const ps = (await pool.query(
     `SELECT id, website_url, normalized_domain, contact_first_name FROM prospects
      WHERE contact_email IS NULL AND website_url IS NOT NULL AND prospect_state IN ('discovered','qualified')
        AND NOT EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id=prospects.id::text AND e.track='email_search')
-     ORDER BY (prospect_state = 'qualified') DESC, id LIMIT $1`, [limit])).rows;
+       AND ($2::text IS NULL OR niche_version_id IN (SELECT id FROM niche_versions WHERE niche_id = $2))
+     ORDER BY (prospect_state = 'qualified') DESC, id LIMIT $1`, [limit, opts.niche ?? null])).rows;
   const s = { searched: 0, found: 0, verified: 0, risky: 0, invalid: 0, none: 0 };
   for (const p of ps) {
     s.searched++;
@@ -116,13 +117,14 @@ export async function verifyPending(pool: pg.Pool, limit = 100) {
 const WEBHOST = /(wix|squarespace|godaddysites|weebly|business\.site|wordpress\.com|webflow|yolasite|site123)/i;
 
 /** Guess common inboxes on the business's own domain; keep only verified, non-catch-all. Max 3 checks. */
-export async function guessEmails(pool: pg.Pool, limit = 50) {
+export async function guessEmails(pool: pg.Pool, limit = 50, niche: string | null = null) {
   const ps = (await pool.query(
     `SELECT id, normalized_domain, principal_first_name FROM prospects p
      WHERE contact_email IS NULL AND normalized_domain IS NOT NULL AND prospect_state IN ('discovered','qualified')
        AND (license_status IS NULL OR license_status = 'ACTIVE')
        AND NOT EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id=p.id::text AND e.track='email_guess')
-     ORDER BY fit_score DESC NULLS LAST, id LIMIT $1`, [limit])).rows;
+       AND ($2::text IS NULL OR p.niche_version_id IN (SELECT id FROM niche_versions WHERE niche_id = $2))
+     ORDER BY fit_score DESC NULLS LAST, id LIMIT $1`, [limit, niche])).rows;
   const s = { tried: 0, found: 0, catchAll: 0, none: 0, checks: 0 };
   for (const p of ps) {
     if (WEBHOST.test(p.normalized_domain)) continue;
