@@ -16,6 +16,8 @@ import { brandPage } from "./pages.js";
 import { grantSms, toE164 } from "../outreach/consent.js";
 import { demoBrief, renderDoc, renderHome, words } from "./home.js";
 import { unsubscribeByToken } from "../outreach/unsubscribe.js";
+import { handleInstantlyEvent } from "../outreach/replies.js";
+import { timingSafeEqual } from "node:crypto";
 
 const send = (res: ServerResponse, status: number, body: string, type = "text/html; charset=utf-8", extra: Record<string, string> = {}) => {
   res.writeHead(status, { "Content-Type": type, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin", ...extra });
@@ -203,6 +205,21 @@ export function createApp(pool: pg.Pool) {
         const t = url.searchParams.get("t");
         const valid = t && /^[A-Za-z0-9_-]{16,64}$/.test(t) ? await approvedPreview(pool, t) : null;
         return send(res, 200, canceledPage(valid ? NicheConfig.parse(valid.config).brand : await currentBrand(pool), valid ? previewUrlFor(valid.token) : null));
+      }
+
+      if (req.method === "POST" && url.pathname === "/instantly/webhook") {
+        const secret = process.env.INSTANTLY_WEBHOOK_SECRET ?? "";
+        const got = String(req.headers["x-roofline-secret"] ?? "");
+        const ok = secret.length >= 32 && got.length === secret.length && timingSafeEqual(Buffer.from(got), Buffer.from(secret));
+        if (!ok) return send(res, 401, "unauthorized", "text/plain");
+        const ev = JSON.parse(await readBody(req, 1_000_000));
+        send(res, 200, "ok", "text/plain"); // acknowledge first; process after
+        handleInstantlyEvent(pool, ev).catch(async (e) => {
+          console.error("instantly event failed:", e instanceof Error ? e.message : e);
+          await pool.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('instantly_event',$1,$2)`,
+            [String(ev?.event_type ?? "?"), `processing failed: ${e instanceof Error ? e.message : e}`]).catch(() => {});
+        });
+        return;
       }
 
       if (req.method === "POST" && url.pathname === "/stripe/webhook") {

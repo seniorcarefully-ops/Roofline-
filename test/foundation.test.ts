@@ -226,3 +226,17 @@ describe("main email (B)", () => {
     expect(e.body.endsWith("—Cole\nI build websites just for roofers.")).toBe(true);
   });
 });
+
+import { handleInstantlyEvent } from "../src/outreach/replies.js";
+describe("instantly events", () => {
+  it("bounce suppresses; duplicate events are ignored; sent advances state", async () => {
+    const id = await prospect(await publishNicheVersion(pool, roofing));
+    await makeSendable(id);
+    expect(await handleInstantlyEvent(pool, { event_type: "email_sent", lead_email: "owner@acmeroof.test", email_id: "e1" })).toEqual({ handled: "email_sent" });
+    expect((await pool.query(`SELECT prospect_state, website_state FROM prospects WHERE id=$1`, [id])).rows[0]).toEqual({ prospect_state: "contacted", website_state: "sent" });
+    expect(await handleInstantlyEvent(pool, { event_type: "email_sent", lead_email: "owner@acmeroof.test", email_id: "e1" })).toEqual({ duplicate: true });
+    await handleInstantlyEvent(pool, { event_type: "email_bounced", lead_email: "owner@acmeroof.test", email_id: "e2" });
+    expect((await pool.query(`SELECT email_state FROM prospects WHERE id=$1`, [id])).rows[0].email_state).toBe("suppressed");
+    expect((await pool.query(`SELECT 1 FROM suppressions WHERE address='owner@acmeroof.test'`)).rowCount).toBe(1);
+  });
+});
