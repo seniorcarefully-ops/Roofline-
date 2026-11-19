@@ -56,6 +56,11 @@ try {
   else if (cmd === "ai-eval") console.log(JSON.stringify(await (await import("./ai/eval.js")).runEval()));
   else if (cmd === "find-emails") console.log(await (await import("./research/emails.js")).findEmails(pool, Number(args[0] ?? 50), { verify: args[1] !== "noverify" }));
   else if (cmd === "verify-emails") console.log(await (await import("./research/emails.js")).verifyPending(pool, Number(args[0] ?? 100)));
+  else if (cmd === "email-report") {
+    const r = await pool.query(`SELECT detail->>'status' AS status, (detail->>'catch_all')::bool AS catch_all, split_part(detail->>'email','@',2) AS domain_kind,
+      count(*) FROM events WHERE track='email_verify' GROUP BY 1,2,3 ORDER BY 4 DESC`);
+    console.log(JSON.stringify(r.rows.map((x) => ({ ...x, domain_kind: /gmail|yahoo|hotmail|outlook|aol|icloud|comcast/.test(x.domain_kind) ? "webmail" : "own-domain" }))));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
