@@ -483,6 +483,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 19, 2026 | Legal entity: SeniorCarefully LLC (WA, active), doing business as "Roofline Websites". WA business license + trade name to be filed about a week before the pilot (needed for SMS carrier registration and live Stripe; not needed for building or email warm-up). |
 | November 19, 2026 | Brand name set to "Roofline Websites" (WA trade name to be filed under the owner's existing company) because "Roofline" is used by other WA roofing-related businesses. |
 | November 19, 2026 | Marketing service refocused as "Get More Calls": Google Business Profile, review requests, Local Services Ads, Search ads, retargeting; social secondary. Acquisition is cold email only. |
 | November 18, 2026 | Approved $150/month email jumpstart budget; main brand domain rooflinewebsites.com approved. |
