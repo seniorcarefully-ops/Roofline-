@@ -43,6 +43,9 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Reviewer now scrolls the page and waits for every image before judging.
 - Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
+## Email finding (live)
+- Own-site extraction (home/contact/about), ranking, Instantly verification (INSTANTLY_API_KEY on Render). Spokane run: 38 sites searched, 24 emails found; verification: 11 verified sendable (5 own-domain, 6 webmail), 8 catch-all (not sendable), 5 invalid (removed). Bug fixed: Instantly returns 'verified' (not 'valid') for good addresses.
+
 ## Compliance
 - Email footer postal address: Roofline Websites, PO Box 2106, Woodinville, WA 98072 (owner's family business PO box, owner-approved 2026-11-19). Owner to confirm "Roofline Websites" is listed on the box's PS Form 1093. Send gate blocks email when no postal address is configured.
 
