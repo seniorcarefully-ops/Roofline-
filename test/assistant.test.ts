@@ -12,7 +12,12 @@ describe("reply guard", () => {
     expect(() => guardReply("Only $99 this week!", ctx())).toThrow(/price/);
     expect(() => guardReply("I can give you a discount.", ctx())).toThrow(/forbidden/);
   });
-  it("blocks claiming to be human", () => expect(() => guardReply("Yes, I'm a real person.", ctx())).toThrow());
+  it("blocks claiming to be human, allows honest AI disclosure", () => {
+    expect(() => guardReply("Yes, I'm a real person.", ctx())).toThrow();
+    expect(guardReply("I'm not a real person, I'm an AI assistant.", ctx())).toBeTruthy();
+    expect(guardReply("We never call you, everything happens by text.", ctx())).toBeTruthy();
+    expect(() => guardReply("Someone will call you tomorrow.", ctx())).toThrow();
+  });
   it("blocks preview link without SMS permission", () => {
     expect(() => guardReply("Here: https://rooflinewebsites.com/p/tok", ctx())).toThrow(/permission/);
     expect(guardReply("Here: https://rooflinewebsites.com/p/tok", ctx({ channel: "sms", smsPermission: true }))).toBeTruthy();
