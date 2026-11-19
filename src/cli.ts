@@ -81,6 +81,15 @@ try {
     const id = latest && JSON.stringify(latest.config) === JSON.stringify(cfg) ? Number(latest.id) : await publishNicheVersion(pool, cfg);
     console.log(await discover(pool, args.slice(1).join(" "), 3, { id, config: cfg }));
   }
+  else if (cmd === "build-top") {
+    // Build a preview for the best qualified prospect of a niche: build-top <niche>
+    const r = await pool.query(`SELECT p.id, p.business_name FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id
+      WHERE v.niche_id = $1 AND p.prospect_state = 'qualified' AND p.website_state = 'none'
+      ORDER BY (SELECT count(*) FROM audit_findings f WHERE f.prospect_id = p.id) DESC, p.google_review_count DESC NULLS LAST LIMIT 1`, [args[0]]);
+    if (!r.rowCount) throw new Error("no qualified prospect");
+    const out: any = await buildAndReview(pool, Number(r.rows[0].id));
+    console.log(JSON.stringify({ business: r.rows[0].business_name, verdict: out.verdict, url: out.url, optin: out.url?.replace("/p/", "/s/"), failed: out.checks?.filter((c: any) => !c.pass) }));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
