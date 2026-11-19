@@ -72,15 +72,21 @@ section{padding:110px 0}
 .kicker{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 .center{text-align:center}.center h2{margin:14px auto 16px;max-width:16ch}.center p.lead{color:var(--ink2);max-width:34em;margin:0 auto}
 h2{font-size:clamp(36px,5vw,62px)}
-.offer{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;margin-top:56px;align-items:stretch}
-.price{background:var(--night);color:#fff;border-radius:28px;padding:42px;display:flex;flex-direction:column;gap:18px}
-.price .amt{font:800 76px/1 "Inter Tight",sans-serif;letter-spacing:-.04em}.price .amt small{font-size:22px;font-weight:600;color:rgba(255,255,255,.7)}
-.price ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
-.price li{display:flex;gap:12px;color:rgba(255,255,255,.9)}.price li::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;margin-top:2px;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/14px no-repeat}
-.price .btn{background:#fff;color:var(--ink);margin-top:auto}
-.addons{display:grid;gap:18px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px;align-items:stretch}
+.plan{background:#fff;border:1px solid #fff;border-radius:28px;padding:34px;display:flex;flex-direction:column;gap:14px;box-shadow:0 14px 40px rgba(17,24,39,.07)}
+.plan.featured{background:var(--night);color:#fff;box-shadow:0 30px 70px rgba(17,24,39,.25)}
+.ptag{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}.featured .ptag{color:#ffb38a}
+.plan h3{font-size:28px;line-height:1.1}
+.plan .amt{font:800 54px/1 "Inter Tight",sans-serif;letter-spacing:-.03em}
+.plan .amt small{font:500 18px Inter,sans-serif;letter-spacing:0;color:var(--muted)}.featured .amt small{color:rgba(255,255,255,.65)}
+.plan .why{margin:0;color:var(--ink2)}.featured .why{color:rgba(255,255,255,.8)}
+.plan ul{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:12px;font-size:15.5px}
+.plan li{display:flex;gap:12px;color:var(--ink2)}.featured li{color:rgba(255,255,255,.88)}.plan li b{color:var(--ink)}.featured li b{color:#fff}
+.plan li::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;margin-top:1px;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/14px no-repeat}
+.plan .btn{margin-top:auto}.featured .btn{background:#fff;color:var(--ink)}
+.fine{margin:28px auto 0;color:var(--muted);font-size:15px;max-width:44em}
 .card{background:var(--card);border:1px solid #fff;border-radius:24px;padding:30px;box-shadow:0 10px 30px rgba(17,24,39,.05)}
-.card h3{font-size:24px;margin-bottom:6px}.card p{margin:0;color:var(--ink2)}.card .tag{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.card h3{font-size:24px;margin-bottom:6px}.card p{margin:0;color:var(--ink2)}
 .story{display:grid;grid-template-columns:.9fr 1.1fr;gap:64px;align-items:center}
 .portrait{position:relative;max-width:440px;justify-self:center;transform:rotate(-2.5deg);filter:drop-shadow(0 30px 40px rgba(17,24,39,.22))}
 .portrait img{width:100%;height:auto;display:block}
@@ -102,7 +108,7 @@ form.get .consent input{width:18px;height:18px;padding:0;margin-top:2px}
 footer{padding:44px 0;color:var(--muted);font-size:14px}footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 28px}
 footer a{color:var(--ink2);text-decoration:none;margin-right:18px}
 .doc{max-width:760px;margin:0 auto;padding:40px 24px 80px}.doc h1{font-size:44px;margin:20px 0 10px}.doc h2{font-size:24px;margin:34px 0 8px}.doc p,.doc li{color:var(--ink2)}
-@media (max-width:900px){.links{display:none}.offer,.story,.steps,.examples{grid-template-columns:1fr}.stage{height:420px}.browser{right:0;height:420px}.phone{display:none}section{padding:80px 0}}
+@media (max-width:900px){.links{display:none}.plans,.story,.steps,.examples{grid-template-columns:1fr}.stage{height:420px}.browser{right:0;height:420px}.phone{display:none}section{padding:80px 0}}
 </style></head><body>`;
 
 const navBar = (brand: Brand) => `<nav><div class="wrap">
@@ -135,18 +141,55 @@ ${navBar(brand)}
 </div></div></div></div>
 
 <section id="offer"><div class="wrap center">
-<span class="kicker">Our offer</span><h2>One simple plan. Everything handled.</h2>
-<p class="lead">No agencies, no contracts, no learning a website builder. We build it, host it, and keep it updated for you.</p>
-<div class="offer" style="text-align:left">
-<div class="price"><span class="kicker" style="color:#ffb38a">Managed website</span>
-<div class="amt">$150<small>/month</small></div>
-<ul><li>Custom site built for your ${esc(w.trade)} business</li><li>Looks great on phones, with tap-to-call and estimate requests</li><li>Your real Google reviews, shown live</li><li>Hosting, security (HTTPS) and maintenance included</li><li>Free edits: ask for changes anytime</li><li>Keep your domain. No setup fee. Cancel anytime.</li></ul>
-<a class="btn" href="#get">Get my free preview</a></div>
-<div class="addons">
-<div class="card"><span class="tag">Optional add-on · $200/month</span><h3>AI missed-call texting</h3><p>Miss a call on a job? An AI assistant texts the caller back, answers basic questions, and collects job details for you.</p></div>
-<div class="card"><span class="tag">Optional add-on · $500/month</span><h3>Automated marketing</h3><p>Content and ad campaigns managed for you, with reports that show what's working. Ad spend is separate and always yours to set.</p></div>
-<div class="card"><span class="tag">Our promise</span><h3>Simple and month-to-month</h3><p>Every service is independent. Buy one, cancel anytime, no bundles required.</p></div>
-</div></div></div></section>
+<span class="kicker">What we offer</span><h2>More calls. More jobs. Less hassle.</h2>
+<p class="lead">Three services, each built to bring you more customers. Start with one, add the others anytime. Every plan is month-to-month.</p>
+<div class="plans" style="text-align:left">
+
+<article class="plan featured">
+<span class="ptag">Start here · Managed website</span>
+<h3>Get found and get the call.</h3>
+<div class="amt">$150<small>&nbsp;/ month</small></div>
+<p class="why">When a homeowner searches for a ${esc(w.one)}, your site is your first impression. Ours are built to make calling you the obvious next step.</p>
+<ul>
+<li><span><b>More calls from your site</b>: tap-to-call and an estimate button on every screen</span></li>
+<li><span><b>Trust at first glance</b>: your real Google reviews, shown live</span></li>
+<li><span><b>Looks sharp on phones</b>, where most homeowners find you</span></li>
+<li><span><b>Zero work for you</b>: hosting, security, updates and free edits included</span></li>
+<li><span>No setup fee · keep your domain · cancel anytime</span></li>
+</ul>
+<a class="btn" href="#get">Get my free preview</a>
+</article>
+
+<article class="plan">
+<span class="ptag">AI missed-call texting</span>
+<h3>Never lose a job to voicemail.</h3>
+<div class="amt">$200<small>&nbsp;/ month</small></div>
+<p class="why">You're on a roof and the phone rings. Most callers won't leave a message. They call the next ${esc(w.one)}. This keeps that customer talking to you.</p>
+<ul>
+<li><span><b>Instant text-back</b> to callers you miss, while you're on the job</span></li>
+<li><span><b>Answers common questions</b> using your approved info</span></li>
+<li><span><b>Collects the job details</b> (address, problem, timing) and sends them to you</span></li>
+<li><span><b>See the value</b>: a clear report of callers reached and jobs captured</span></li>
+</ul>
+<a class="btn ghost" href="#get">Start with a free preview</a>
+</article>
+
+<article class="plan">
+<span class="ptag">Automated marketing</span>
+<h3>Stay top of mind. Fill your schedule.</h3>
+<div class="amt">$500<small>&nbsp;/ month</small></div>
+<p class="why">Homeowners need a ${esc(w.one)} when something goes wrong, and they call the name they've seen. We keep yours in front of them.</p>
+<ul>
+<li><span><b>Content posted for you</b> on your connected channels</span></li>
+<li><span><b>Local ad campaigns</b> managed within the budget you set</span></li>
+<li><span><b>Know what's working</b>: reports on visits, leads and cost per lead</span></li>
+<li><span>Ad spend is separate and always yours to control</span></li>
+</ul>
+<a class="btn ghost" href="#get">Start with a free preview</a>
+</article>
+</div>
+<p class="fine">Every service is independent: buy one, cancel anytime, no bundles required. Results vary by market; we report real numbers, never guesses.</p>
+</div></section>
 
 <section id="story" style="background:#fff"><div class="wrap story">
 <div class="portrait"><img src="/assets/cole.jpg" alt="Polaroid of ${PERSONA.first} in front of a house mid-reroof" width="960" height="1170" loading="lazy"></div>
@@ -158,11 +201,11 @@ ${navBar(brand)}
 <p class="sig">${PERSONA.first} &amp; the ${esc(brand.name)} team</p></div></div></section>
 
 <section id="how"><div class="wrap center">
-<span class="kicker">How it works</span><h2>Live in days, not months.</h2>
+<span class="kicker">How it works</span><h2>Already built. Live when you say go.</h2>
 <div class="steps" style="text-align:left">
-<div class="card"><h3>We build it</h3><p>We build a site for your business from your public info and real reviews. Free, no obligation.</p></div>
-<div class="card"><h3>You see it</h3><p>We text you a private preview link. Look it over, ask questions, request changes.</p></div>
-<div class="card"><h3>It goes live</h3><p>Love it? Subscribe in one tap and connect your domain with one click. We handle the rest.</p></div>
+<div class="card"><h3>It's already built</h3><p>We've built a site for your business from your public info and real reviews. Free, no obligation.</p></div>
+<div class="card"><h3>See it on your phone</h3><p>We text you the private link. Look it over, ask questions, request changes.</p></div>
+<div class="card"><h3>Go live in one tap</h3><p>Subscribe, then connect your domain with one click. Your new site goes live right away.</p></div>
 </div></div></section>
 
 <section id="examples" style="background:#fff"><div class="wrap center">
