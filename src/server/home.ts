@@ -261,3 +261,159 @@ export function renderDoc(brand: Brand, kind: "privacy" | "terms"): string {
   return head(brand, `${kind === "privacy" ? "Privacy Policy" : "Terms & SMS Terms"} · ${brand.name}`, `${brand.name} ${kind}`) +
     `<div class="sky">${navBar(brand)}</div><div class="doc">${body}</div>` + foot(brand);
 }
+
+/* ------------------------------------------------------------------------ */
+/* V2 landing page (test): outcome-first, three numbered steps.              */
+/* ------------------------------------------------------------------------ */
+import { pickPhoto, photoUrl } from "../build/photos.js";
+
+function between(html: string, start: string, endTag = "</section>"): string {
+  const a = html.indexOf(start); if (a < 0) return "";
+  const b = html.indexOf(endTag, a); return b < 0 ? "" : html.slice(a, b + endTag.length);
+}
+
+export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean; error?: string } = {}): string {
+  const w = words(niche);
+  const v1 = renderHome(brand, niche, opts);
+  const story = between(v1, '<section id="story"');
+  const get = between(v1, '<section id="get" class="final">');
+  const hero = pickPhoto("hero", "v2-hero"), home = pickPhoto("home", "v2-ads"), crew = pickPhoto("repair", "v2-sms");
+  const img = (p: ReturnType<typeof pickPhoto>, w: number, h: number) => p ? esc(photoUrl(p, w, h)) : "";
+  const tick = (t: string) => `<li><span>${t}</span></li>`;
+  const step = (n: number, o: { id: string; tag: string; title: string; lead: string; how: string[]; price: string; per: string; note: string; cta: string; visual: string; flip?: boolean; soon?: boolean }) => `
+<section id="${o.id}" class="step${o.flip ? " flip" : ""}"><div class="wrap step-grid">
+<div class="step-copy">
+<div class="step-num"><b>${n}</b><span>${o.tag}</span></div>
+<h2>${o.title}</h2>
+<p class="lead2">${o.lead}</p>
+<h3 class="howh">How it does it</h3>
+<ul class="how">${o.how.map(tick).join("")}</ul>
+<div class="pricebox"><div><span class="amt2">${o.price}</span><span class="per">${o.per}</span></div><p>${o.note}</p>
+<a class="btn accent" href="#get">${o.cta}</a></div>
+</div>
+<div class="step-visual">${o.visual}</div>
+</div></section>`;
+
+  const websiteVisual = `<div class="v-photo" style="background-image:url('${img(hero, 1400, 1100)}')"></div>
+<div class="v-device laptop"><div class="bar"><i></i><i></i><i></i></div><div class="frame"><iframe src="/demo" title="Demo website" loading="lazy" tabindex="-1"></iframe></div></div>
+<div class="v-device phone2"><div class="frame"><iframe src="/demo" title="Demo website on a phone" loading="lazy" tabindex="-1"></iframe></div></div>
+<span class="v-tag">Demo business</span>`;
+
+  const smsVisual = `<div class="v-photo" style="background-image:url('${img(crew, 1400, 1100)}')"></div>
+<div class="v-device phone2 chat"><div class="chat-head"><b>(509) 555-0142</b><span>Text message</span></div>
+<div class="bub them small">Missed call · 2:14 PM</div>
+<div class="bub us">Hi, this is the assistant for Summit Ridge Roofing. Sorry we missed your call! What can we help with?</div>
+<div class="bub them">Got a leak over the garage after last night's storm</div>
+<div class="bub us">Sorry to hear that. What's the address, and is water coming in right now? Photos help too.</div>
+</div>
+<div class="v-card note right"><b>New lead for you</b><span>Leak over garage · 123 Pine St · urgent · 1 photo</span></div>
+<span class="v-tag">Illustration</span>`;
+
+  const adsVisual = `<div class="v-photo" style="background-image:url('${img(home, 1400, 1100)}')"></div>
+<div class="v-device serp"><div class="q">roof repair near me</div>
+<div class="ad"><span class="spons">Sponsored · <i>Google Guaranteed</i></span><b>Summit Ridge Roofing</b><span class="st">★★★★★ 4.9 (128) · Open now · Serves your area</span><span class="call">Call</span></div>
+<div class="mappack"><div class="map"></div>
+<div class="pin"><b>1. Summit Ridge Roofing</b><span>★ 4.9 (128) · Roofing contractor</span></div>
+<div class="pin dim"><b>2. Another Roofer</b><span>★ 4.2 (31)</span></div></div></div>
+<div class="v-card note"><b>This month</b><span>38 calls · 14 new reviews · $41 per lead</span></div>
+<span class="v-tag">Illustration · example numbers</span>`;
+
+  const css = `<style>
+.hero2{position:relative;z-index:2;text-align:center;padding:64px 0 90px}
+.hero2 h1{font-size:clamp(46px,8.4vw,108px);margin:20px auto 18px;max-width:11ch}
+.hero2 p{font-size:clamp(18px,2vw,22px);color:var(--ink2);max-width:34em;margin:0 auto 30px}
+.steps3{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:34px}
+.steps3 a{display:flex;align-items:center;gap:10px;text-decoration:none;background:rgba(255,255,255,.8);border:1px solid #fff;border-radius:999px;padding:10px 18px 10px 10px;font-weight:600;box-shadow:0 6px 20px rgba(17,24,39,.06)}
+.steps3 a b{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:800 14px "Inter Tight",sans-serif}
+.steps3 a:first-child b{background:var(--accent)}
+.step{padding:110px 0}.step:nth-of-type(even){background:#fff}
+.step-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:64px;align-items:center}
+.step.flip .step-copy{order:2}
+.step-num{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.step-num b{width:56px;height:56px;border-radius:16px;background:var(--accent);color:#fff;display:grid;place-items:center;font:800 28px "Inter Tight",sans-serif}
+.step-num span{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.step h2{font-size:clamp(34px,4.6vw,58px);margin:0 0 16px}
+.lead2{font-size:19px;color:var(--ink2);margin:0 0 26px}
+.howh{font:700 14px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.how{list-style:none;margin:0 0 28px;padding:0;display:grid;gap:12px}
+.how li{display:flex;gap:12px;font-size:17px}.how li span{color:var(--ink2)}.how b{color:var(--ink)}
+.how li::before{content:"";flex:none;width:24px;height:24px;border-radius:50%;margin-top:1px;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/14px no-repeat}
+.pricebox{display:flex;flex-wrap:wrap;align-items:center;gap:16px 28px;background:var(--night);color:#fff;border-radius:22px;padding:24px 28px}
+.pricebox .amt2{font:800 44px/1 "Inter Tight",sans-serif;letter-spacing:-.03em}.pricebox .per{font-size:16px;color:rgba(255,255,255,.7);margin-left:6px}
+.pricebox p{flex:1 1 200px;margin:0;font-size:15px;color:rgba(255,255,255,.75)}
+.step-visual{position:relative;height:560px;border-radius:28px;overflow:hidden;box-shadow:0 30px 70px rgba(17,24,39,.16)}
+.v-photo{position:absolute;inset:0;background-size:cover;background-position:center}
+.v-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(15,22,33,.15),rgba(15,22,33,.55))}
+.v-device{position:absolute;background:#fff;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.v-device .frame{position:relative;width:100%;height:100%;overflow:hidden}
+.laptop{left:7%;top:12%;width:70%;height:62%;border-radius:12px}
+.laptop .bar{height:24px;background:#f1f3f6;display:flex;gap:5px;align-items:center;padding:0 10px}.laptop .bar i{width:8px;height:8px;border-radius:50%;background:#d4d9e0}
+.laptop .frame{height:calc(100% - 24px)}.laptop iframe{border:0;width:1440px;height:1000px;transform:scale(.36);transform-origin:0 0;pointer-events:none}
+.phone2{right:7%;bottom:7%;width:200px;height:410px;border-radius:30px;background:#0b0f17;padding:8px}
+.phone2 .frame{border-radius:23px}.phone2 iframe{border:0;width:390px;height:800px;transform:scale(.473);transform-origin:0 0;pointer-events:none}
+.chat{left:50%;right:auto;top:8%;bottom:auto;transform:translateX(-50%);width:290px;height:auto;background:#f5f6f8;padding:14px;border-radius:30px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.chat-head{text-align:center;padding:4px 0 8px;border-bottom:1px solid #e5e7eb;margin-bottom:4px}.chat-head b{display:block}.chat-head span{font-size:12px;color:var(--muted)}
+.bub{max-width:82%;padding:9px 12px;border-radius:16px;line-height:1.35}
+.bub.us{align-self:flex-end;background:#2f7cf6;color:#fff;border-bottom-right-radius:5px}
+.bub.them{align-self:flex-start;background:#e3e6eb;color:var(--ink);border-bottom-left-radius:5px}
+.bub.small{font-size:12px;background:#fde7dd;color:#9a3412}
+.v-card{position:absolute;left:6%;bottom:7%;background:#fff;border-radius:16px;padding:14px 18px;box-shadow:0 18px 40px rgba(0,0,0,.25);display:grid;gap:2px;max-width:270px}
+.v-card b{font:700 15px "Inter Tight",sans-serif}.v-card span{font-size:13.5px;color:var(--ink2)}
+.v-card.right{left:auto;right:6%}
+.v-card.note b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:8px;vertical-align:middle}
+.serp{left:8%;right:8%;top:9%;border-radius:18px;padding:18px;display:grid;gap:12px}
+.serp .q{border:1px solid #dfe3e8;border-radius:999px;padding:10px 16px;color:var(--ink2)}
+.serp .ad{display:grid;gap:3px;border:1px solid #e9ecf0;border-radius:14px;padding:12px 14px;position:relative}
+.serp .spons{font-size:12px;color:var(--muted)}.serp .spons i{font-style:normal;color:#16a34a;font-weight:600}
+.serp .ad b{color:#1a0dab;font-size:17px}.serp .st{font-size:13px;color:var(--ink2)}
+.serp .call{position:absolute;right:12px;top:14px;background:#e8f0fe;color:#1a56db;font-weight:600;font-size:13px;border-radius:999px;padding:5px 12px}
+.mappack{display:grid;gap:8px}.map{height:110px;border-radius:12px;background:linear-gradient(135deg,#e6efe3,#dfe9f3);position:relative}
+.map::after{content:"";position:absolute;left:42%;top:30%;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#ea4335}
+.pin{display:grid;font-size:13px}.pin b{font-size:14px}.pin.dim{opacity:.55}
+.v-tag{position:absolute;right:14px;top:14px;background:rgba(15,22,33,.75);color:#fff;font-size:12px;font-weight:600;border-radius:999px;padding:5px 11px}
+.soonband{background:var(--soft);padding:60px 0;text-align:center}
+@media (max-width:900px){.step-grid{grid-template-columns:1fr;gap:36px}.step.flip .step-copy{order:0}.step-visual{height:460px}.laptop{width:84%;left:8%}.phone2{width:170px;height:350px}.phone2 iframe{transform:scale(.4)}.step{padding:72px 0}}
+</style>`;
+
+  const s1 = step(1, { id: "website", tag: "Managed website", title: "Turn searches into phone calls.",
+    lead: `Most homeowners look you up on their phone before they call. A site built for ${w.many} makes calling you the obvious next step.`,
+    how: ["<b>Tap-to-call and estimate buttons</b> on every screen, so calling takes one tap",
+      "<b>Your real Google reviews</b>, shown live, so homeowners trust you before they call",
+      "<b>Built for phones first</b>, fast and clean where your customers actually look",
+      "<b>Already built for you</b>: we make it from your public info, you see it before you pay",
+      "<b>Zero upkeep</b>: hosting, security and free edits whenever you ask"],
+    price: "$150", per: "/ month", note: "No setup fee. Keep your domain. Cancel anytime.", cta: "See my free preview", visual: websiteVisual });
+  const s2 = step(2, { id: "texting", tag: "AI missed-call texting", flip: true, title: "Never lose a job to voicemail.",
+    lead: `You're on a roof when the phone rings. Most callers won't leave a message, they call the next ${w.one}. This keeps them talking to you.`,
+    how: ["<b>Texts every missed caller back in seconds</b>, day or night",
+      "<b>Answers common questions</b> using your approved info, never guesses prices",
+      "<b>Collects the job details</b>: address, the problem, timing and photos",
+      "<b>Sends you a ready-to-call lead</b> by text, with the whole conversation",
+      "<b>A monthly report</b> of missed callers saved and jobs captured"],
+    price: "$200", per: "/ month", note: "Works with your current number. Add it anytime, cancel anytime.", cta: "Start with my free preview", visual: smsVisual });
+  const s3 = step(3, { id: "ads", tag: "Get More Calls · managed Google marketing", title: "Show up first when they search.",
+    lead: `When a roof leaks, homeowners search Google and call the top results. We put you there and keep you there.`,
+    how: ["<b>Google Business Profile, managed</b>: services, areas, photos and updates tuned for the local map",
+      "<b>More 5-star reviews</b>: automatic review requests after every job",
+      "<b>Google ads that bring calls</b>: Local Services Ads (pay per lead) and search ads within your budget",
+      "<b>Know what's working</b>: calls, leads, cost per lead and new reviews every month"],
+    price: "$500", per: "/ month", note: "Ad spend is separate, paid to Google, and always yours to set.", cta: "Start with my free preview", visual: adsVisual });
+
+  return head(brand, `${brand.name} · Get more ${w.trade} clients`, `Get more ${w.trade} clients: a website that turns searches into calls, AI that texts back missed callers, and Google marketing that puts you first.`)
+    .replace("</head>", `${css}</head>`) + `
+<div class="sky">
+<span class="cloud" style="width:520px;height:160px;left:6%;top:120px"></span>
+<span class="cloud" style="width:420px;height:140px;right:4%;top:60px;animation-duration:80s"></span>
+${navBar(brand).replace('<a href="/#offer">Pricing</a><a href="/#story">About</a><a href="/#examples">Examples</a><a href="/#how">How it works</a>', '<a href="#website">1 · Website</a><a href="#texting">2 · AI texting</a><a href="#ads">3 · Google marketing</a><a href="#story">About</a>')}
+<div class="hero2"><div class="wrap">
+<span class="pill"><b>For ${esc(w.many)}</b> Built before you even ask</span>
+<h1>Get more ${esc(w.trade)} clients.</h1>
+<p>Three simple steps that bring in more calls and more jobs. Start with step 1 today, add steps 2 and 3 whenever you're ready.</p>
+<div class="cta"><a class="btn accent" href="#get">See my free preview</a><a class="btn ghost" href="#website">How it works</a></div>
+<div class="steps3"><a href="#website"><b>1</b>Get found and called</a><a href="#texting"><b>2</b>Never miss a lead</a><a href="#ads"><b>3</b>Show up first</a></div>
+</div></div></div>
+${s1}${s2}${s3}
+${story}
+${get}
+` + foot(brand).replace("</body>", `<script>/* test page */</script></body>`);
+}

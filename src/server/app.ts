@@ -14,7 +14,7 @@ import { previewUrlFor } from "../build/pipeline.js";
 import { consentText, loadOptin, renderOptin } from "./optin.js";
 import { brandPage } from "./pages.js";
 import { grantSms, toE164 } from "../outreach/consent.js";
-import { demoBrief, renderDoc, renderHome, words } from "./home.js";
+import { demoBrief, renderDoc, renderHome, renderHomeV2, words } from "./home.js";
 import { unsubscribeByToken } from "../outreach/unsubscribe.js";
 import { handleInstantlyEvent } from "../outreach/replies.js";
 import { timingSafeEqual } from "node:crypto";
@@ -66,10 +66,11 @@ export function createApp(pool: pg.Pool) {
       }
 
       // Public brand site (indexable).
-      if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
+      if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/v2" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
         const an = await activeNiche(pool).catch(() => null);
         const brand = an?.config.brand ?? FALLBACK_BRAND, niche = an?.config.niche ?? "roofing";
         if (url.pathname === "/") return send(res, 200, renderHome(brand, niche, { sent: url.searchParams.get("sent") === "1" }));
+        if (url.pathname === "/v2") return send(res, 200, renderHomeV2(brand, niche, { sent: url.searchParams.get("sent") === "1" }), undefined, { "X-Robots-Tag": "noindex" });
         if (url.pathname === "/demo") {
           const html = renderRidge(demoBrief(niche), brand, { purchaseUrl: "/#get" })
             .replace("</head>", "<style>#rl-bar,#rl-fade{display:none!important}body{padding-bottom:0!important}</style></head>");
