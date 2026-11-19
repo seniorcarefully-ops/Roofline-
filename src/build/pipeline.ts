@@ -26,7 +26,8 @@ export async function buildAndReview(pool: pg.Pool, prospectId: number) {
   }
   const brand = NicheConfig.parse(p.config).brand;
   if (p.website_state === "none") await transition(pool, prospectId, "website_state", "build_queued", "builder");
-  await transition(pool, prospectId, "website_state", "building", "builder");
+  // A build that failed midway leaves the state at "building": resume instead of getting stuck.
+  if (p.website_state !== "building") await transition(pool, prospectId, "website_state", "building", "builder");
 
   const version = Number((await pool.query(`SELECT COALESCE(MAX(version),0)+1 v FROM previews WHERE prospect_id=$1`, [prospectId])).rows[0].v);
   const brief = await assembleBrief(pool, prospectId, version);

@@ -91,6 +91,15 @@ try {
     console.log(JSON.stringify({ business: r.rows[0].business_name, verdict: out.verdict, url: out.url, optin: out.url?.replace("/p/", "/s/"), failed: out.checks?.filter((c: any) => !c.pass) }));
   }
   else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
+  else if (cmd === "stuck") {
+    const r = await pool.query(`SELECT id, business_name, website_state, place_id IS NOT NULL AS has_place FROM prospects WHERE website_state IN ('build_queued','building','reviewing')`);
+    const out = [];
+    for (const p of r.rows) {
+      try { const x: any = await buildAndReview(pool, Number(p.id)); out.push({ ...p, verdict: x.verdict }); }
+      catch (e) { out.push({ ...p, error: e instanceof Error ? e.stack?.split("\n").slice(0, 3).join(" | ") : String(e) }); }
+    }
+    console.log(JSON.stringify(out));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
