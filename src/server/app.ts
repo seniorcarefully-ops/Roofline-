@@ -61,11 +61,13 @@ export function createApp(pool: pg.Pool) {
       const m = url.pathname.match(/^\/p\/([A-Za-z0-9_-]{16,64})(\/buy)?\/?$/);
 
       if (req.method === "GET" && url.pathname === "/healthz") return send(res, 200, "ok", "text/plain");
-      if (req.method === "GET" && url.pathname === "/assets/cole.jpg") {
+      // Persona (Cole) polaroid per niche: /assets/persona/<niche>.jpg; old URL kept for roofing.
+      const pm = url.pathname === "/assets/cole.jpg" ? ["", "roofing"] : url.pathname.match(/^\/assets\/persona\/([a-z_]{2,40})\.jpg$/);
+      if (req.method === "GET" && pm) {
         const { readFile } = await import("node:fs/promises");
         const { fileURLToPath } = await import("node:url");
-        const img = await readFile(fileURLToPath(new URL("../assets/cole.jpg", import.meta.url)));
-        return send(res, 200, img as any, "image/jpeg", { "Cache-Control": "public, max-age=86400" });
+        const img = await readFile(fileURLToPath(new URL(`../assets/persona/${pm[1]}.jpg`, import.meta.url))).catch(() => null);
+        return img ? send(res, 200, img as any, "image/jpeg", { "Cache-Control": "public, max-age=86400" }) : send(res, 404, "", "text/plain");
       }
 
       // Draft/test niche sites, not yet on their own domain: /n/<niche-slug> (noindex).

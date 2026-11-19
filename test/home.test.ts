@@ -17,3 +17,13 @@ describe("per-niche offer page", () => {
     for (const p of ["$150", "$200", "$500"]) expect(html).toContain(`<span class="amt2">${p}</span>`);
   });
 });
+
+describe("persona photo per niche", () => {
+  it("roofing shows its own polaroid; a niche without one shows none", async () => {
+    const { leakDetection } = await import("../src/niches/leak_detection.js");
+    expect(renderHomeV2(roofing.brand, "roofing", {}, roofing.offer)).toContain('/assets/persona/roofing.jpg');
+    const leak = renderHomeV2(leakDetection.brand, "leak_detection", {}, leakDetection.offer);
+    expect(leak).not.toContain("/assets/persona/roofing.jpg");
+    expect(leak).toContain("story nophoto");
+  });
+});

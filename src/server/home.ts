@@ -7,6 +7,10 @@ const esc = (s: string) =>
 type Brand = NicheConfig["brand"];
 
 import { words } from "../niches/words.js";
+import { existsSync } from "node:fs";
+import { fileURLToPath as _f } from "node:url";
+/** True when a niche has its own persona polaroid (never borrow another niche's). */
+export const personaPhoto = (niche: string) => existsSync(_f(new URL(`../assets/persona/${niche}.jpg`, import.meta.url)));
 export { words };
 
 export const PERSONA = { first: "Cole", full: "Cole Bennett" };
@@ -85,6 +89,7 @@ h2{font-size:clamp(36px,5vw,62px)}
 .card{background:var(--card);border:1px solid #fff;border-radius:24px;padding:30px;box-shadow:0 10px 30px rgba(17,24,39,.05)}
 .card h3{font-size:24px;margin-bottom:6px}.card p{margin:0;color:var(--ink2)}
 .story{display:grid;grid-template-columns:.9fr 1.1fr;gap:64px;align-items:center}
+.story.nophoto{grid-template-columns:1fr;max-width:820px}
 .portrait{position:relative;max-width:440px;justify-self:center;transform:rotate(-2.5deg);filter:drop-shadow(0 30px 40px rgba(17,24,39,.22))}
 .portrait img{width:100%;height:auto;display:block}
 .portrait .ph{position:absolute;inset:0;display:grid;place-items:center;color:#8b95a3;font-weight:600}
@@ -189,8 +194,8 @@ ${navBar(brand)}
 <p class="fine">Every service is independent: buy one, cancel anytime, no bundles required. Results vary by market; we report real numbers, never guesses.</p>
 </div></section>
 
-<section id="story" style="background:#fff"><div class="wrap story">
-<div class="portrait"><img src="/assets/cole.jpg" alt="Polaroid of ${PERSONA.first} in front of a house mid-reroof" width="960" height="1170" loading="lazy"></div>
+<section id="story" style="background:#fff"><div class="wrap story${personaPhoto(niche) ? "" : " nophoto"}">
+${personaPhoto(niche) ? `<div class="portrait"><img src="/assets/persona/${niche}.jpg" alt="Old polaroid of ${PERSONA.first} on a ${esc(w.trade)} job site" width="960" height="1170" loading="lazy"></div>` : ""}
 <div><span class="kicker">Meet ${PERSONA.first}</span>
 <h2>${esc(w.trade[0]!.toUpperCase() + w.trade.slice(1))} runs in the family.</h2>
 <p>${PERSONA.first}'s dad was a ${esc(w.person)}. So was his grandpa, and his great-grandpa before him.</p>
