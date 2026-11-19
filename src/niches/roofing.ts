@@ -3,8 +3,8 @@ import type { NicheConfig } from "./schema.js";
 export const roofing: NicheConfig = {
   niche: "roofing",
   brand: {
-    name: "Roofline",
-    domain: null,
+    name: "Roofline Websites",
+    domain: "rooflinewebsites.com",
     colors: { primary: "#1F2A37", accent: "#E4572E" },
     tagline: "Websites built for roofing companies.",
   },

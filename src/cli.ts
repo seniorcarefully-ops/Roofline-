@@ -37,7 +37,7 @@ try {
     const t = await import("./sms/twilio.js");
     const to = args[0]!;
     if (!/^\+1\d{10}$/.test(to)) throw new Error("usage: sms-test +1XXXXXXXXXX");
-    const r = await t.sendSms(to, "Roofline test: this is the new Roofline number (509) 390-8200. Reply STOP to opt out.", "+15093908200");
+    const r = await t.sendSms(to, "Roofline Websites test: this is the Roofline Websites number (509) 390-8200. Reply STOP to opt out.", "+15093908200");
     await pool.query(`INSERT INTO messages(channel, direction, idempotency_key, provider_id, status, body, meta) VALUES ('sms','outbound',$1,$2,$3,$4,$5)`,
       [`sms-test:${r.sid}`, r.sid, r.status, "owner test", JSON.stringify({ to })]);
     await new Promise((res) => setTimeout(res, 15000));
