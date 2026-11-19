@@ -53,6 +53,7 @@ try {
     const text = m.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("");
     console.log(JSON.stringify({ stop: m.stop_reason, text, usage: m.usage }));
   }
+  else if (cmd === "ai-eval") console.log(JSON.stringify(await (await import("./ai/eval.js")).runEval()));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
