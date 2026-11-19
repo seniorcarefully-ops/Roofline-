@@ -61,6 +61,14 @@ try {
       count(*) FROM events WHERE track='email_verify' GROUP BY 1,2,3 ORDER BY 4 DESC`);
     console.log(JSON.stringify(r.rows.map((x) => ({ ...x, domain_kind: /gmail|yahoo|hotmail|outlook|aol|icloud|comcast/.test(x.domain_kind) ? "webmail" : "own-domain" }))));
   }
+  else if (cmd === "email-reapply") {
+    // Re-apply recorded verification results (no new checks, no credits).
+    const r = await pool.query(`UPDATE prospects p SET contact_verified = true
+      FROM (SELECT DISTINCT ON (subject_id) subject_id, detail FROM events WHERE track='email_verify' ORDER BY subject_id, id DESC) e
+      WHERE e.subject_id = p.id::text AND e.detail->>'status' IN ('valid','verified') AND NOT (e.detail->>'catch_all')::bool
+        AND p.contact_email = e.detail->>'email'`);
+    console.log({ markedVerified: r.rowCount });
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();

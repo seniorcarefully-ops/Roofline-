@@ -83,7 +83,7 @@ export async function findEmails(pool: pg.Pool, limit = 50, opts: { verify?: boo
         status = v.status; catchAll = v.catchAll;
       } else status = "unverified";
     } else s.none++;
-    const ok = status === "valid" && !catchAll;
+    const ok = (status === "valid" || status === "verified") && !catchAll;
     if (ok) s.verified++; else if (status === "invalid") s.invalid++; else if (chosen) s.risky++;
     if (chosen && status !== "invalid")
       await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = $3, updated_at = now() WHERE id = $1`, [p.id, chosen, ok]);
@@ -103,7 +103,7 @@ export async function verifyPending(pool: pg.Pool, limit = 100) {
   for (const p of ps) {
     const v = await verifyEmail(p.contact_email).catch((e) => ({ status: `error: ${e.message}`, catchAll: false }));
     s.checked!++;
-    const ok = v.status === "valid" && !v.catchAll;
+    const ok = (v.status === "valid" || v.status === "verified") && !v.catchAll;
     if (ok) s.valid!++; else if (v.catchAll) s.catch_all!++; else if (v.status === "invalid") s.invalid!++; else s.other!++;
     if (v.status === "invalid") await pool.query(`UPDATE prospects SET contact_email = NULL, contact_verified = false WHERE id = $1`, [p.id]);
     else await pool.query(`UPDATE prospects SET contact_verified = $2 WHERE id = $1`, [p.id, ok]);
