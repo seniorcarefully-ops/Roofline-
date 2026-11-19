@@ -175,6 +175,7 @@ Marketing ($500, "Get More Calls") delivery (supersedes the earlier social-first
 
 - Every niche has its own landing page in the inventory, generated from that niche's configuration under its own brand/domain.
 - The numbered-steps layout (currently 1-2-3: website, AI texting, Google marketing) is the default, not a requirement. A niche's offer config sets the headline, the number of steps, each step's outcome, how-it-works points, price, notes, CTA and visual type (website mockup, SMS conversation, search result, photo).
+- Multiple niches run at the same time: one site per niche, selected by the request's domain (each niche brand gets its own domain); until a niche has a domain, its site is served at a private, noindex path (/n/<niche>). Prospects, previews, campaigns and sending domains stay separate per niche.
 - New niche offers (copy, steps, any price differences) are drafted by the strategy agent from niche research and require owner approval before going live, like locked copy and prices.
 
 ## 6. LOCKED: initial cold email
