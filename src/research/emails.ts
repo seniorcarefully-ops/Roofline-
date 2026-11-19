@@ -112,3 +112,36 @@ export async function verifyPending(pool: pg.Pool, limit = 100) {
   }
   return s;
 }
+
+const WEBHOST = /(wix|squarespace|godaddysites|weebly|business\.site|wordpress\.com|webflow|yolasite|site123)/i;
+
+/** Guess common inboxes on the business's own domain; keep only verified, non-catch-all. Max 3 checks. */
+export async function guessEmails(pool: pg.Pool, limit = 50) {
+  const ps = (await pool.query(
+    `SELECT id, normalized_domain, principal_first_name FROM prospects p
+     WHERE contact_email IS NULL AND normalized_domain IS NOT NULL AND prospect_state IN ('discovered','qualified')
+       AND (license_status IS NULL OR license_status = 'ACTIVE')
+       AND NOT EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id=p.id::text AND e.track='email_guess')
+     ORDER BY fit_score DESC NULLS LAST, id LIMIT $1`, [limit])).rows;
+  const s = { tried: 0, found: 0, catchAll: 0, none: 0, checks: 0 };
+  for (const p of ps) {
+    if (WEBHOST.test(p.normalized_domain)) continue;
+    s.tried++;
+    const cands = [p.principal_first_name ? p.principal_first_name.toLowerCase() : null, "info", "office"].filter(Boolean) as string[];
+    let result: { email: string | null; status: string } = { email: null, status: "none" };
+    for (const local of cands) {
+      const email = `${local}@${p.normalized_domain}`;
+      const v = await verifyEmail(email).catch(() => ({ status: "error", catchAll: false }));
+      s.checks++;
+      if (v.catchAll) { result = { email: null, status: "catch_all_domain" }; s.catchAll++; break; } // every guess would "pass": unusable
+      if (v.status === "verified" || v.status === "valid") { result = { email, status: "verified" }; break; }
+    }
+    if (result.email) {
+      s.found++;
+      await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = true WHERE id = $1`, [p.id, result.email]);
+    } else if (result.status === "none") s.none++;
+    await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'email_guess','email_finder',$2)`,
+      [String(p.id), { tried: cands, ...result }]);
+  }
+  return s;
+}

@@ -69,6 +69,8 @@ try {
         AND p.contact_email = e.detail->>'email'`);
     console.log({ markedVerified: r.rowCount });
   }
+  else if (cmd === "score") console.log(JSON.stringify(await (await import("./research/score.js")).scoreAll(pool)));
+  else if (cmd === "guess-emails") console.log(await (await import("./research/emails.js")).guessEmails(pool, Number(args[0] ?? 50)));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
