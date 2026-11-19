@@ -93,3 +93,30 @@ export function emailFooter(postalAddress: string | null, unsubscribeUrl: string
   if (!/^https:\/\//.test(unsubscribeUrl)) throw new Error("unsubscribe link must be https");
   return `\n\n--\n${postalAddress}\nNot interested? Reply "unsubscribe" or click: ${unsubscribeUrl}`;
 }
+
+/**
+ * LOCKED main email (variant B; approved as the main cold email 2026-11-19).
+ * The audit lives on the prospect's personal page ([Link]); no attachment.
+ */
+export const LOCKED_B_SUBJECT = "A new website for [Company]";
+export const LOCKED_B_BODY = `Hi [First Name],
+
+I noticed your website is missing [X], [Y], and [Z]. I put together a short audit showing what I found, and I went ahead and built a new website for [Company] that fixes these issues.
+
+You can see both here: [Link]. Or just reply with your cell number and I'll text you the preview. No obligation.
+
+\u2014[Name]
+I build websites just for [Niche].`;
+
+export function renderMainEmail(v: EmailVars & { nichePlural: string }): { subject: string; body: string } {
+  if (!v.company.trim() || !v.senderName.trim()) throw new Error("missing company or sender");
+  if (v.findings.length !== 3 || v.findings.some((f) => !f.trim())) throw new Error("need exactly 3 findings");
+  if (!/^https:\/\//.test(v.optInUrl)) throw new Error("opt-in link must be https");
+  const greeting = v.firstName?.trim() || GREETING_FALLBACK(v.company);
+  const fill = (s: string) => s.replaceAll("[Company]", v.company).replaceAll("[First Name]", greeting)
+    .replace("[X]", v.findings[0]).replace("[Y]", v.findings[1]).replace("[Z]", v.findings[2])
+    .replaceAll("[Name]", v.senderName).replaceAll("[Link]", v.optInUrl).replaceAll("[Niche]", v.nichePlural);
+  const out = { subject: fill(LOCKED_B_SUBJECT), body: fill(LOCKED_B_BODY) };
+  if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
+  return out;
+}

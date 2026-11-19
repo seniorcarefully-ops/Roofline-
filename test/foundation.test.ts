@@ -36,7 +36,7 @@ async function makeSendable(id: number) {
     `INSERT INTO previews(prospect_id, version, content_hash, token) VALUES ($1::bigint, 1, 'h', 'tok' || $1::text) RETURNING id`, [id]);
   await pool.query(`INSERT INTO reviews(preview_id, verdict, checks, reviewer) VALUES ($1,'approved','{}','reviewer')`,
     [pv.rows[0].id]);
-  await pool.query(`INSERT INTO audit_documents(prospect_id, file_path, sha256) VALUES ($1,'a.pdf','x')`, [id]);
+  await pool.query(`INSERT INTO evidence_images(prospect_id, key, png) VALUES ($1,'mobile-top.png','\\x00')`, [id]);
   for (const code of ["broken_links", "no_tap_to_call", "no_estimate_cta"])
     await pool.query(
       `INSERT INTO audit_findings(prospect_id, code, summary, detail, source_url, evidence_path, captured_at, verified)
@@ -212,5 +212,17 @@ describe("email footer", () => {
     expect(f).toContain("unsubscribe");
     expect(() => emailFooter(null, "https://x.test/u")).toThrow(/postal address/);
     expect(() => emailFooter("addr", "http://x.test/u")).toThrow(/https/);
+  });
+});
+
+import { renderMainEmail } from "../src/outreach/template.js";
+describe("main email (B)", () => {
+  it("renders the approved wording with link, sender and niche", () => {
+    const e = renderMainEmail({ company: "Acme Roofing", firstName: "Dana", findings: ["a", "b", "c"], senderName: "Cole",
+      optInUrl: "https://rooflinewebsites.com/s/tok", nichePlural: "roofers" });
+    expect(e.subject).toBe("A new website for Acme Roofing");
+    expect(e.body).toContain("I noticed your website is missing a, b, and c. I put together a short audit");
+    expect(e.body).toContain("You can see both here: https://rooflinewebsites.com/s/tok. Or just reply with your cell number");
+    expect(e.body.endsWith("—Cole\nI build websites just for roofers.")).toBe(true);
   });
 });

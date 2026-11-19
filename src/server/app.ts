@@ -15,6 +15,7 @@ import { consentText, loadOptin, renderOptin } from "./optin.js";
 import { brandPage } from "./pages.js";
 import { grantSms, toE164 } from "../outreach/consent.js";
 import { demoBrief, renderDoc, renderHome, words } from "./home.js";
+import { unsubscribeByToken } from "../outreach/unsubscribe.js";
 
 const send = (res: ServerResponse, status: number, body: string, type = "text/html; charset=utf-8", extra: Record<string, string> = {}) => {
   res.writeHead(status, { "Content-Type": type, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin", ...extra });
@@ -88,6 +89,23 @@ export function createApp(pool: pg.Pool) {
         await pool.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('inbound_request',$1,$2)`,
           [String(r.rows[0].id), `inbound preview request: ${business}, ${city} (${words(niche).one})`]);
         return send(res, 303, "", "text/plain", { Location: "/?sent=1#get" });
+      }
+
+      // One-click unsubscribe. GET shows a confirm button (link scanners open GETs);
+      // POST (button or List-Unsubscribe-Post one-click) performs it.
+      const u = url.pathname.match(/^\/u\/([a-f0-9]{32})\/?$/);
+      if (u) {
+        const brand = await currentBrand(pool);
+        if (req.method === "POST") {
+          await readBody(req, 10_000).catch(() => "");
+          const r = await unsubscribeByToken(pool, u[1]!, "link");
+          return send(res, r.ok ? 200 : 404, r.ok
+            ? brandPage(brand, { title: "Unsubscribed", icon: "check", tone: "success", heading: "You're unsubscribed.", lead: "You won't get any more emails from us. Sorry for the bother." })
+            : messagePage(brand, "Not found", "This link isn't valid.", "If you keep getting emails, just reply \"unsubscribe\"."));
+        }
+        if (req.method === "GET") return send(res, 200, brandPage(brand, { title: "Unsubscribe", icon: "info", heading: "Unsubscribe from our emails?",
+          lead: "One tap and you won't hear from us again.",
+          body: `<form method="post" style="background:none;padding:0;box-shadow:none"><button class="btn primary" type="submit" style="border:0;cursor:pointer;font:600 17px Inter,sans-serif;padding:15px 26px;border-radius:999px;background:var(--accent);color:#fff">Unsubscribe me</button></form>` }), undefined, { "Cache-Control": "no-store" });
       }
 
       // Audit + SMS opt-in page (the link in the email).

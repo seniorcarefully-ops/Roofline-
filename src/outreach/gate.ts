@@ -57,8 +57,9 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
     return { ok: reasons.length === 0, reasons, template: "no_website" };
   }
 
-  const doc = await db.query(`SELECT 1 FROM audit_documents WHERE prospect_id = $1`, [prospectId]);
-  if (!doc.rowCount) reasons.push("no audit attachment");
+  // The audit is the hosted page behind the opt-in link: it must have screenshot evidence.
+  const ev = await db.query(`SELECT 1 FROM evidence_images WHERE prospect_id = $1 LIMIT 1`, [prospectId]);
+  if (!ev.rowCount) reasons.push("no audit evidence images");
 
   // Exactly the top three verified findings, in niche priority order.
   const cfg = NicheConfig.parse(p.config);

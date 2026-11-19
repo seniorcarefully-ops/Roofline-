@@ -71,6 +71,8 @@ try {
   }
   else if (cmd === "score") console.log(JSON.stringify(await (await import("./research/score.js")).scoreAll(pool)));
   else if (cmd === "guess-emails") console.log(await (await import("./research/emails.js")).guessEmails(pool, Number(args[0] ?? 50)));
+  else if (cmd === "queue-leads") console.log(JSON.stringify(await (await import("./outreach/instantly.js")).queueLeads(pool, { minScore: Number(args[0] ?? 60), limit: Number(args[1] ?? 50) })));
+  else if (cmd === "ensure-campaign") console.log(await (await import("./outreach/instantly.js")).ensureCampaign(args[0] ?? "roofing"));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
