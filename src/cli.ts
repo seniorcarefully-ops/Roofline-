@@ -54,6 +54,7 @@ try {
     console.log(JSON.stringify({ stop: m.stop_reason, text, usage: m.usage }));
   }
   else if (cmd === "ai-eval") console.log(JSON.stringify(await (await import("./ai/eval.js")).runEval()));
+  else if (cmd === "find-emails") console.log(await (await import("./research/emails.js")).findEmails(pool, Number(args[0] ?? 50), { verify: args[1] !== "noverify" }));
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();
