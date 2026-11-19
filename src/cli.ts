@@ -43,6 +43,16 @@ try {
     await new Promise((res) => setTimeout(res, 15000));
     console.log(JSON.stringify({ sent: r, after15s: await t.messageStatus(r.sid) }));
   }
+  else if (cmd === "ai-test") {
+    const { claude, CONVERSATION_MODEL } = await import("./ai/client.js");
+    const m = await claude.messages.create({
+      model: CONVERSATION_MODEL, max_tokens: 200,
+      output_config: { effort: "low" },
+      messages: [{ role: "user", content: "Reply with exactly: Roofline Websites assistant online." }],
+    } as any);
+    const text = m.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("");
+    console.log(JSON.stringify({ stop: m.stop_reason, text, usage: m.usage }));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();

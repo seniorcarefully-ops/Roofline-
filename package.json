@@ -13,6 +13,7 @@
     "serve": "NODE_USE_ENV_PROXY=1 tsx src/server/main.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0",
     "pg": "^8.23.1",
     "playwright": "^1.63.0",
     "zod": "^4.6.7"
