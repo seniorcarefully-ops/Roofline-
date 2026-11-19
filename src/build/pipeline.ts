@@ -34,7 +34,7 @@ export async function buildAndReview(pool: pg.Pool, prospectId: number) {
   const buy = purchaseUrlFor(token);
   const live = brief.placeId ? await fetchLiveReviews(brief.placeId).catch(() => null) : null;
   // The static file is the reviewed snapshot; the server re-renders with fresh live reviews.
-  const out = await writePreview(join(PREVIEW_DIR, String(prospectId), `v${version}`), renderRidge(brief, brand, { purchaseUrl: buy, live }));
+  const out = await writePreview(join(PREVIEW_DIR, String(prospectId), `v${version}`), renderRidge(brief, brand, { purchaseUrl: buy, live, niche: NicheConfig.parse(p.config).niche }));
   const pv = await pool.query(
     `INSERT INTO previews(prospect_id, version, url, content_hash, brief, token) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
     [prospectId, version, previewUrlFor(token), out.hash, JSON.stringify(brief), token]);

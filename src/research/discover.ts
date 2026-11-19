@@ -1,5 +1,6 @@
 import type pg from "pg";
 import { activeNiche } from "../niches/registry.js";
+import type { NicheConfig } from "../niches/schema.js";
 import { cleanUrl, normalizeDomain, searchPlaces, type Place } from "./places.js";
 
 export interface DiscoverResult { found: number; inserted: number; skipped: Record<string, number> }
@@ -15,8 +16,8 @@ export function fitReason(p: Place, c: { placeTypes: string[]; minRating: number
 }
 
 /** Search one area with the active niche's terms and store new prospects (deduped). */
-export async function discover(pool: pg.Pool, area: string, maxPages = 3): Promise<DiscoverResult> {
-  const niche = await activeNiche(pool);
+export async function discover(pool: pg.Pool, area: string, maxPages = 3, nicheOverride?: { id: number; config: NicheConfig }): Promise<DiscoverResult> {
+  const niche = nicheOverride ?? await activeNiche(pool);
   if (!niche) throw new Error("no active niche");
   const crit = niche.config.prospecting;
   const seen = new Map<string, Place>();

@@ -73,6 +73,14 @@ try {
   else if (cmd === "guess-emails") console.log(await (await import("./research/emails.js")).guessEmails(pool, Number(args[0] ?? 50)));
   else if (cmd === "queue-leads") console.log(JSON.stringify(await (await import("./outreach/instantly.js")).queueLeads(pool, { minScore: Number(args[0] ?? 60), limit: Number(args[1] ?? 50) })));
   else if (cmd === "ensure-campaign") console.log(await (await import("./outreach/instantly.js")).ensureCampaign(args[0] ?? "roofing"));
+  else if (cmd === "discover-niche") {
+    // Discover for a specific niche without changing which niche is live: discover-niche <niche> <area>
+    const { NICHES } = await import("./niches/index.js");
+    const cfg = NICHES[args[0]!]; if (!cfg) throw new Error("unknown niche");
+    const latest = (await pool.query(`SELECT id, config FROM niche_versions WHERE niche_id = $1 ORDER BY version DESC LIMIT 1`, [cfg.niche])).rows[0];
+    const id = latest && JSON.stringify(latest.config) === JSON.stringify(cfg) ? Number(latest.id) : await publishNicheVersion(pool, cfg);
+    console.log(await discover(pool, args.slice(1).join(" "), 3, { id, config: cfg }));
+  }
   else console.log("usage: npm run cli -- discover <area>");
 } finally {
   await pool.end();

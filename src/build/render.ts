@@ -5,6 +5,7 @@ import type { NicheConfig } from "../niches/schema.js";
 import { BuildBrief } from "./brief.js";
 import { photoUrl, pickPhoto, serviceTag, type Photo } from "./photos.js";
 import { MIN_RATING_FOR_REVIEWS, type LiveReviews } from "./reviews.js";
+import { words } from "../niches/words.js";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -17,6 +18,7 @@ const PHONE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2
 export interface RenderOptions {
   purchaseUrl: string;
   live?: LiveReviews | null; // live Google reviews, never stored
+  niche?: string;            // selects wording + photo library (default roofing)
 }
 
 /**
@@ -27,6 +29,8 @@ export interface RenderOptions {
  */
 export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts: RenderOptions): string {
   const b = BuildBrief.parse(input);
+  const niche = opts.niche ?? "roofing";
+  const W = words(niche), T = W.trade[0]!.toUpperCase() + W.trade.slice(1);
   const name = esc(b.businessName);
   const tel = b.phoneE164 ? `tel:${b.phoneE164}` : null;
   const phone = esc(b.phone ?? "");
@@ -41,7 +45,7 @@ export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts
 
   const seed = b.placeId ?? b.businessName;
   const used = new Set<string>();
-  const take = (tag: string) => { const p = pickPhoto(tag, seed, used) ?? pickPhoto("shingles", seed, used); if (p) used.add(p.id); return p; };
+  const take = (tag: string) => { const p = pickPhoto(tag, seed, used, niche) ?? pickPhoto("shingles", seed, used, niche); if (p) used.add(p.id); return p; };
   const hero = take("hero");
   const about = take("home");
   const ctaBg = take("shingles");
@@ -55,7 +59,7 @@ export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts
   if (showReviews) stats.push([rating!.toFixed(1), `Google rating`], [String(count), `Google reviews`]);
   if (lic?.since) stats.push([String(lic.since), "WA licensed since"]);
   if (lic && !lic.since) stats.push(["WA", "Licensed contractor"]);
-  if (cityShort) stats.push([cityShort, "Local roofer"]);
+  if (cityShort) stats.push([cityShort, W.site.statLabel]);
 
   const why: string[] = [];
   if (showReviews) why.push(`Rated ${rating!.toFixed(1)} stars by ${count} customers on Google`);
@@ -86,8 +90,8 @@ export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>${name}${city ? ` | Roofing in ${city}` : " | Roofing"}</title>
-<meta name="description" content="${name}: roofing${city ? ` in ${city}` : ""}.${phone ? ` Call ${phone} for an estimate.` : ""}">
+<title>${name}${city ? ` | ${esc(T)} in ${city}` : ` | ${esc(T)}`}</title>
+<meta name="description" content="${name}: ${esc(W.trade)}${city ? ` in ${city}` : ""}.${phone ? ` Call ${phone} for an estimate.` : ""}">
 <meta name="theme-color" content="#0f1621">
 ${hero ? `<link rel="preload" as="image" href="${esc(photoUrl(hero, 1800, 1100))}">` : ""}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,8 +209,8 @@ ${tel ? `<a class="btn" href="${tel}">${PHONE}<span>Call</span></a>` : `<a class
 </div></header>
 <main id="top">
 <div class="hero">${img(hero, 1800, 1100, "", false)}<div class="wrap">
-<div><span class="kicker">Roofing${cityShort ? ` · ${cityShort}` : ""}</span>
-<h1>A roof you don't have to think about.</h1>
+<div><span class="kicker">${esc(T)}${cityShort ? ` · ${cityShort}` : ""}</span>
+<h1>${esc(W.site.heroHeadline)}</h1>
 <p>${name}${city ? ` works on homes in and around ${city}` : " works on homes in your area"}. Tell us what's going on and we'll take it from there.</p>
 <div class="cta">${tel ? `<a class="btn" href="${tel}">${PHONE}Call ${phone}</a>` : ""}<a class="btn line" href="#estimate">Request an estimate</a></div></div>
 ${showReviews ? `<div class="badge"><div class="big">${rating!.toFixed(1)} ${stars(rating!)}</div><p>From ${count} reviews on Google</p></div>` : ""}
@@ -230,8 +234,8 @@ ${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
 <section><div class="wrap">
 <div class="head"><div><span class="kicker">How it works</span><h2>Three simple steps</h2></div></div>
 <ol class="steps">
-<li><h3>Reach out</h3><p>Call${tel ? ` ${phone}` : ""} or send a request with a few details about your roof.</p></li>
-<li><h3>We take a look</h3><p>We'll talk through what you're seeing and what your roof needs.</p></li>
+<li><h3>Reach out</h3><p>Call${tel ? ` ${phone}` : ""} or ${esc(W.site.reachOut)}</p></li>
+<li><h3>We take a look</h3><p>${esc(W.site.takeLook)}</p></li>
 <li><h3>Clear estimate</h3><p>You get a clear estimate before any work starts. No pressure.</p></li>
 </ol></div></section>
 <section id="area" class="soft"><div class="wrap">
@@ -244,13 +248,13 @@ ${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
 <div class="faq">${faqs.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div>
 </div></section>
 <section id="estimate" class="final">${img(ctaBg, 1800, 1000)}<div class="wrap">
-<div><span class="kicker" style="color:#ffb38a">Free to ask</span><h2>Let's talk about your roof.</h2><p>Send a few details and the best way to reach you.${tel ? ` Or call <a href="${tel}" style="color:#fff">${phone}</a>.` : ""}</p></div>
+<div><span class="kicker" style="color:#ffb38a">Free to ask</span><h2>${esc(W.site.ctaHeadline)}</h2><p>Send a few details and the best way to reach you.${tel ? ` Or call <a href="${tel}" style="color:#fff">${phone}</a>.` : ""}</p></div>
 <form data-preview="true" onsubmit="event.preventDefault();this.querySelector('.note').textContent='This is a preview, so the form is not active yet. Please call instead.'">
 <h3>Request an estimate</h3>
 <input name="name" placeholder="Your name" autocomplete="name" aria-label="Your name">
 <input name="phone" placeholder="Phone" autocomplete="tel" aria-label="Phone">
 <input name="address" placeholder="Property address" autocomplete="street-address" aria-label="Property address">
-<textarea name="msg" rows="3" placeholder="What's going on with your roof?" aria-label="What's going on with your roof?"></textarea>
+<textarea name="msg" rows="3" placeholder="${esc(W.site.msgPlaceholder)}" aria-label="${esc(W.site.msgPlaceholder)}"></textarea>
 <button class="btn" type="submit">Send request</button>
 <p class="note">Preview: this form becomes active when the site goes live.</p>
 </form></div></section>

@@ -17,6 +17,7 @@ import { grantSms, toE164 } from "../outreach/consent.js";
 import { demoBrief, renderDoc, renderHome, renderHomeV2, words } from "./home.js";
 import { unsubscribeByToken } from "../outreach/unsubscribe.js";
 import { roofing } from "../niches/roofing.js";
+import { nicheForHost, nicheFromSlug } from "../niches/index.js";
 const roofingOffer = roofing.offer;
 import { handleInstantlyEvent } from "../outreach/replies.js";
 import { timingSafeEqual } from "node:crypto";
@@ -67,15 +68,25 @@ export function createApp(pool: pg.Pool) {
         return send(res, 200, img as any, "image/jpeg", { "Cache-Control": "public, max-age=86400" });
       }
 
+      // Draft/test niche sites, not yet on their own domain: /n/<niche-slug> (noindex).
+      const nm = url.pathname.match(/^\/n\/([a-z-]{2,40})\/?$/);
+      if (req.method === "GET" && nm) {
+        const cfg = nicheFromSlug(nm[1]!);
+        if (!cfg || !cfg.offer) return send(res, 404, messagePage(await currentBrand(pool), "Not found", "Page not found.", "This page doesn't exist.", "/"));
+        return send(res, 200, renderHomeV2(cfg.brand, cfg.niche, {}, cfg.offer), undefined, { "X-Robots-Tag": "noindex, nofollow" });
+      }
+
       // Public brand site (indexable).
       if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/v1" || url.pathname === "/v2" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
-        const an = await activeNiche(pool).catch(() => null);
+        const byHost = nicheForHost(req.headers.host);
+        const an = byHost ? { config: byHost } : await activeNiche(pool).catch(() => null);
         const brand = an?.config.brand ?? FALLBACK_BRAND, niche = an?.config.niche ?? "roofing";
         if (url.pathname === "/") return send(res, 200, renderHomeV2(brand, niche, { sent: url.searchParams.get("sent") === "1" }, an?.config.offer ?? roofingOffer));
         if (url.pathname === "/v2") return send(res, 301, "", "text/plain", { Location: "/" });
         if (url.pathname === "/v1") return send(res, 200, renderHome(brand, niche, { sent: url.searchParams.get("sent") === "1" }), undefined, { "X-Robots-Tag": "noindex" });
         if (url.pathname === "/demo") {
-          const html = renderRidge(demoBrief(niche), brand, { purchaseUrl: "/#get" })
+          const dn = nicheFromSlug(url.searchParams.get("n") ?? "") ?? an?.config ?? roofing;
+          const html = renderRidge(demoBrief(dn.niche), dn.brand, { purchaseUrl: "/#get", niche: dn.niche })
             .replace("</head>", "<style>#rl-bar,#rl-fade{display:none!important}body{padding-bottom:0!important}</style></head>");
           return send(res, 200, html, undefined, { "X-Robots-Tag": "noindex" });
         }
@@ -170,7 +181,8 @@ export function createApp(pool: pg.Pool) {
         if (!pv) return send(res, 404, messagePage(await currentBrand(pool), "Not found", "This link isn't available.", "The preview may have been replaced with a newer version."));
         const brief = BuildBrief.parse(pv.brief);
         const live = brief.placeId ? await fetchLiveReviews(brief.placeId).catch(() => null) : null;
-        const html = renderRidge(brief, NicheConfig.parse(pv.config).brand, { purchaseUrl: purchaseUrlFor(pv.token), live });
+        const pc = NicheConfig.parse(pv.config);
+        const html = renderRidge(brief, pc.brand, { purchaseUrl: purchaseUrlFor(pv.token), live, niche: pc.niche });
         await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'preview_view','visitor',$2)`,
           [String(pv.prospect_id), { version: pv.version, ua: String(req.headers["user-agent"] ?? "").slice(0, 200) }]);
         return send(res, 200, html, undefined, { "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" });

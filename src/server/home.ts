@@ -6,11 +6,8 @@ const esc = (s: string) =>
 
 type Brand = NicheConfig["brand"];
 
-/** Per-niche wording. Adding a niche = adding an entry here (and its NicheConfig). */
-export const NICHE_WORDS: Record<string, { one: string; many: string; trade: string }> = {
-  roofing: { one: "roofer", many: "roofers", trade: "roofing" },
-};
-export const words = (niche: string) => NICHE_WORDS[niche] ?? { one: "business", many: "local businesses", trade: "local service" };
+import { words } from "../niches/words.js";
+export { words };
 
 export const PERSONA = { first: "Cole", full: "Cole Bennett" };
 export const BRAND_PHONE = { display: "(509) 390-8200", e164: "+15093908200" };
@@ -19,9 +16,9 @@ export const BRAND_PHONE = { display: "(509) 390-8200", e164: "+15093908200" };
 export function demoBrief(niche: string): BuildBrief {
   const w = words(niche);
   return {
-    prospectId: 0, version: 1, businessName: `Summit Ridge ${w.trade[0]!.toUpperCase()}${w.trade.slice(1)} (Demo)`,
+    prospectId: 0, version: 1, businessName: `Summit Ridge ${w.trade.replace(/\b\w/g, (c) => c.toUpperCase())} (Demo)`,
     phone: "(555) 010-0199", phoneE164: "+15550100199", city: "Your Town, USA", serviceArea: [],
-    services: ["Roof repair", "Roof replacement"], hours: null, rating: null, reviewCount: null,
+    services: w.site.defaultServices, hours: null, rating: null, reviewCount: null,
     googleMapsUrl: null, placeId: null, license: null, servicesSource: "category", sources: ["demo"],
   };
 }
@@ -195,8 +192,8 @@ ${navBar(brand)}
 <section id="story" style="background:#fff"><div class="wrap story">
 <div class="portrait"><img src="/assets/cole.jpg" alt="Polaroid of ${PERSONA.first} in front of a house mid-reroof" width="960" height="1170" loading="lazy"></div>
 <div><span class="kicker">Meet ${PERSONA.first}</span>
-<h2>${W === "Roofer" ? "Roofing runs in the family." : `${W}s run in the family.`}</h2>
-<p>${PERSONA.first}'s dad was a ${esc(w.one)}. So was his grandpa, and his great-grandpa before him.</p>
+<h2>${esc(w.trade[0]!.toUpperCase() + w.trade.slice(1))} runs in the family.</h2>
+<p>${PERSONA.first}'s dad was a ${esc(w.person)}. So was his grandpa, and his great-grandpa before him.</p>
 <p>${PERSONA.first}? He builds websites. Just for ${esc(w.many)}.</p>
 <p>That's the whole idea behind ${esc(brand.name)}: one trade, done right. We know what a ${esc(w.one)}'s customers look for, so every site we build is made to turn visitors into calls. Smart automation does the heavy lifting, which is how we build your site before you ask and keep it at $150 a month.</p>
 <p class="sig">${PERSONA.first} &amp; the ${esc(brand.name)} team</p></div></div></section>
@@ -277,7 +274,8 @@ export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean
   const v1 = renderHome(brand, niche, opts);
   const story = between(v1, '<section id="story"');
   const get = between(v1, '<section id="get" class="final">');
-  const hero = pickPhoto("hero", "v2-hero"), home = pickPhoto("home", "v2-ads"), crew = pickPhoto("repair", "v2-sms");
+  const hero = pickPhoto("hero", "v2-hero", undefined, niche), home = pickPhoto("home", "v2-ads", undefined, niche), crew = pickPhoto("repair", "v2-sms", undefined, niche);
+  const demoName = `Summit Ridge ${w.trade.replace(/\b\w/g, (c) => c.toUpperCase())}`;
   const img = (p: ReturnType<typeof pickPhoto>, w: number, h: number) => p ? esc(photoUrl(p, w, h)) : "";
   const tick = (t: string) => `<li><span>${t}</span></li>`;
   const step = (n: number, o: { id: string; tag: string; title: string; lead: string; how: string[]; price: string; per: string; note: string; cta: string; visual: string; flip?: boolean; soon?: boolean }) => `
@@ -295,26 +293,26 @@ export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean
 </div></section>`;
 
   const websiteVisual = `<div class="v-photo" style="background-image:url('${img(hero, 1400, 1100)}')"></div>
-<div class="v-device laptop"><div class="bar"><i></i><i></i><i></i></div><div class="frame"><iframe src="/demo" title="Demo website" loading="lazy" tabindex="-1"></iframe></div></div>
-<div class="v-device phone2"><div class="frame"><iframe src="/demo" title="Demo website on a phone" loading="lazy" tabindex="-1"></iframe></div></div>
+<div class="v-device laptop"><div class="bar"><i></i><i></i><i></i></div><div class="frame"><iframe src="/demo?n=${niche}" title="Demo website" loading="lazy" tabindex="-1"></iframe></div></div>
+<div class="v-device phone2"><div class="frame"><iframe src="/demo?n=${niche}" title="Demo website on a phone" loading="lazy" tabindex="-1"></iframe></div></div>
 <span class="v-tag">Demo business</span>`;
 
   const smsVisual = `<div class="v-photo" style="background-image:url('${img(crew, 1400, 1100)}')"></div>
 <div class="v-device phone2 chat"><div class="chat-head"><b>(509) 555-0142</b><span>Text message</span></div>
 <div class="bub them small">Missed call · 2:14 PM</div>
-<div class="bub us">Hi, this is the assistant for Summit Ridge Roofing. Sorry we missed your call! What can we help with?</div>
-<div class="bub them">Got a leak over the garage after last night's storm</div>
-<div class="bub us">Sorry to hear that. What's the address, and is water coming in right now? Photos help too.</div>
+<div class="bub us">Hi, this is the assistant for ${demoName}. Sorry we missed your call! What can we help with?</div>
+<div class="bub them">${esc(w.demo.problem)}</div>
+<div class="bub us">${esc(w.demo.followUp)}</div>
 </div>
-<div class="v-card note right"><b>New lead for you</b><span>Leak over garage · 123 Pine St · urgent · 1 photo</span></div>
+<div class="v-card note right"><b>New lead for you</b><span>${esc(w.demo.lead)}</span></div>
 <span class="v-tag">Illustration</span>`;
 
   const adsVisual = `<div class="v-photo" style="background-image:url('${img(home, 1400, 1100)}')"></div>
-<div class="v-device serp"><div class="q">roof repair near me</div>
-<div class="ad"><span class="spons">Sponsored · <i>Google Guaranteed</i></span><b>Summit Ridge Roofing</b><span class="st">★★★★★ 4.9 (128) · Open now · Serves your area</span><span class="call">Call</span></div>
+<div class="v-device serp"><div class="q">${esc(w.demo.searchQuery)}</div>
+<div class="ad"><span class="spons">Sponsored · <i>Google Guaranteed</i></span><b>${esc(demoName)}</b><span class="st">★★★★★ 4.9 (128) · Open now · Serves your area</span><span class="call">Call</span></div>
 <div class="mappack"><div class="map"></div>
-<div class="pin"><b>1. Summit Ridge Roofing</b><span>★ 4.9 (128) · Roofing contractor</span></div>
-<div class="pin dim"><b>2. Another Roofer</b><span>★ 4.2 (31)</span></div></div></div>
+<div class="pin"><b>1. ${esc(demoName)}</b><span>★ 4.9 (128) · ${esc(w.demo.category)}</span></div>
+<div class="pin dim"><b>2. Another company</b><span>★ 4.2 (31)</span></div></div></div>
 <div class="v-card note"><b>This month</b><span>38 calls · 14 new reviews · $41 per lead</span></div>
 <span class="v-tag">Illustration · example numbers</span>`;
 
@@ -377,7 +375,7 @@ export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean
 
   if (!offer) throw new Error(`no offer configured for niche ${niche}`);
   const visuals: Record<string, string> = { website: websiteVisual, sms: smsVisual, search: adsVisual,
-    photo: `<div class="v-photo" style="background-image:url('${img(pickPhoto("home", "v2-photo"), 1400, 1100)}')"></div>` };
+    photo: `<div class="v-photo" style="background-image:url('${img(pickPhoto("home", "v2-photo", undefined, niche), 1400, 1100)}')"></div>` };
   const steps = offer.steps.map((st, i) => step(i + 1, { ...st, flip: i % 2 === 1, visual: visuals[st.visual]! })).join("");
   return head(brand, `${brand.name} · ${offer.headline.replace(/\.$/, "")}`, `${offer.headline} ${offer.subhead}`)
     .replace("</head>", `${css}</head>`) + `

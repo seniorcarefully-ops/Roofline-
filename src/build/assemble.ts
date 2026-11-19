@@ -1,3 +1,4 @@
+import { words } from "../niches/words.js";
 import type { Db } from "../db.js";
 import type { BuildBrief } from "./brief.js";
 
@@ -15,9 +16,10 @@ export async function placeDetails(placeId: string): Promise<any> {
 
 /** Build a brief from the prospect record plus a fresh Google listing lookup. Nothing invented. */
 export async function assembleBrief(db: Db, prospectId: number, version: number): Promise<BuildBrief> {
-  const p = (await db.query(`SELECT * FROM prospects WHERE id = $1`, [prospectId])).rows[0];
+  const p = (await db.query(`SELECT p.*, v.niche_id FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id WHERE p.id = $1`, [prospectId])).rows[0];
   if (!p) throw new Error("prospect not found");
   if (!p.place_id) throw new Error("prospect has no Google place id; cannot verify facts");
+  const niche: string = p.niche_id;
   const d = await placeDetails(p.place_id);
   const comp = (t: string) => d.addressComponents?.find((c: any) => c.types?.includes(t));
   const city = comp("locality")?.longText ?? null;
@@ -32,7 +34,7 @@ export async function assembleBrief(db: Db, prospectId: number, version: number)
     city: city && state ? `${city}, ${state}` : city,
     serviceArea: [],
     // Without a verified service list, use only what the Google category implies.
-    services: ["Roof repair", "Roof replacement"],
+    services: words(niche).site.defaultServices,
     servicesSource: "category",
     placeId: p.place_id,
     license: p.license_status === "ACTIVE"
