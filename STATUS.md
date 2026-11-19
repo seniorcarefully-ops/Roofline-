@@ -46,6 +46,12 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 ## Email finding (live)
 - Own-site extraction (home/contact/about), ranking, Instantly verification (INSTANTLY_API_KEY on Render). Spokane run: 38 sites searched, 24 emails found; verification: 11 verified sendable (5 own-domain, 6 webmail), 8 catch-all (not sendable), 5 invalid (removed). Bug fixed: Instantly returns 'verified' (not 'valid') for good addresses.
 
+## Outreach (live, paused)
+- Main cold email = locked variant B (approved 2026-11-19; Instantly cannot attach per-lead files). Footer with PO box + one-click unsubscribe (/u/<token>, confirm-then-POST).
+- Instantly campaign "Roofline Websites · roofing · main (B)" (id c1b1e8bf…), DRAFT: Cole mailboxes only, weekdays 8-5 Pacific (America/Boise 9-18), text-only, open+link tracking off, stop on reply/auto-reply, 40/day.
+- queue-leads: only verified, fit>=60, gate-passing prospects; each lead carries its fully rendered email. Prospect marked contacted only on Instantly's email_sent event.
+- Webhooks (reply_received, email_sent, email_bounced, lead_unsubscribed) -> /instantly/webhook with secret header (INSTANTLY_WEBHOOK_SECRET on Render); verified 401 without secret, 200 on Instantly test. Replies: fetch email, Cole's assistant decides, deterministic side effects (consent, unsubscribe, state, exceptions), reply sent via Instantly in-thread. Until texting is live, a prospect who gives their number gets the preview link by email.
+
 ## Compliance
 - Email footer postal address: Roofline Websites, PO Box 2106, Woodinville, WA 98072 (owner's family business PO box, owner-approved 2026-11-19). Owner to confirm "Roofline Websites" is listed on the box's PS Form 1093. Send gate blocks email when no postal address is configured.
 
