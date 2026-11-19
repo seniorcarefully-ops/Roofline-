@@ -43,6 +43,11 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Reviewer now scrolls the page and waits for every image before judging.
 - Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
+## Multi-niche test: leak detection (draft, 2026-11-19)
+- Niche config src/niches/leak_detection.ts (placeholder brand "Leak Detection Websites", no domain, approved prices), own wording (src/niches/words.ts) and photo library (27 Unsplash photos). Test site at /n/leak-detection (noindex). Roofing site unaffected; host-based routing ready for per-niche domains.
+- Live run on Render: Spokane discovery 45 found / 36 stored; licenses 19 active, 5 inactive, 12 unmatched; audit 31 checked, 5 qualified. First preview built + approved: Tactical Plumbing & Piping (leak-detection wording, photos, opt-in page with 3 findings). No emails or campaign for this niche.
+- Known gaps before a niche goes live: real brand name + domain, own sending domains/campaign, niche-specific Cole photo, preview-site accent color should follow brand color.
+
 ## Email finding (live)
 - Own-site extraction (home/contact/about), ranking, Instantly verification (INSTANTLY_API_KEY on Render). Spokane run: 38 sites searched, 24 emails found; verification: 11 verified sendable (5 own-domain, 6 webmail), 8 catch-all (not sendable), 5 invalid (removed). Bug fixed: Instantly returns 'verified' (not 'valid') for good addresses.
 
