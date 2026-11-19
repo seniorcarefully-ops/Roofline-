@@ -129,6 +129,13 @@ PROPOSED, awaiting approval:
 - Locked email change to add an SMS opt-in link (see section 6.2).
 - Growth governor numbers (see section 20.1).
 
+### 5.3 Owner decisions, November 19, 2026
+
+- Goal: 1,000 paying subscribers. Start small; scale to thousands, then potentially hundreds of thousands, of emails per month under the growth governor.
+- Fully agent-operated: no human-delivered sales, support, or service is offered. Emails, replies, SMS and support are handled by agents. The owner builds and directs the system; exceptions route to the owner only when the system cannot resolve them.
+- Brand persona: Roofline uses a brand character (photoreal human image, fictional "family of roofers" brand legend) as its public face and as the sender identity on outreach. Owner considers this acceptable brand storytelling.
+- Guardrails kept: the persona makes no checkable professional claims (licenses, years, specific jobs, reviews, awards); case studies and results stay real; legally required sender identity (business name, postal address) stays real; agents disclose being AI where required (SMS first message; when asked; AI-bot disclosure laws such as California's); a discreet footer line notes the brand character.
+
 ## 6. LOCKED: initial cold email
 
 Preserve this exact subject and body unless Micah explicitly approves a revision. Populate placeholders only with verified information. Do not reintroduce “Want to see it?”
