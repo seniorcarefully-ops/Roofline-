@@ -136,6 +136,26 @@ PROPOSED, awaiting approval:
 - Brand persona: Roofline uses a brand character (photoreal human image, fictional "family of roofers" brand legend) as its public face and as the sender identity on outreach. Owner considers this acceptable brand storytelling.
 - Guardrails kept: the persona makes no checkable professional claims (licenses, years, specific jobs, reviews, awards); case studies and results stay real; legally required sender identity (business name, postal address) stays real; agents disclose being AI where required (SMS first message; when asked; AI-bot disclosure laws such as California's); a discreet footer line notes the brand character.
 
+### 5.4 Channel and product plans (November 19, 2026)
+
+Acquisition channel (owner decision): cold email only. Prospects without a verified email, or that fail any criterion, are skipped; no cold SMS, AI cold calls, or direct mail.
+
+Voicemail → SMS (Roofline's own number, and the $200 product):
+1. Call arrives at the Twilio number (or is forwarded from the customer's cell on no-answer/busy via carrier conditional forwarding).
+2. Short branded greeting + voicemail recording; transcription.
+3. Within seconds, an SMS to the caller from the same number: identifies the business and that it's an automated assistant, acknowledges the missed call, asks how it can help. Texting a person who just called is a response to their inquiry; registered under our A2P campaign as such. STOP/HELP honored.
+4. AI conversation from approved knowledge only; collects name, address, issue, timing, photos (MMS); never invents prices, availability or appointments.
+5. Summary to the business owner (SMS/email) with transcript; logged for value reporting.
+Product specifics: per customer, a dedicated local number, its own A2P registration under the customer's business (ISV model), approved knowledge base edited in the customer dashboard, escalation rules, monthly value report (missed calls answered, conversations, jobs captured, business-confirmed bookings).
+
+Marketing ($500) content management:
+1. Onboarding connects channels the customer authorizes: Google Business Profile, Facebook/Instagram (Meta), optionally Google Ads / Meta Ads accounts owned by the customer.
+2. Monthly plan generated from niche playbook + local season (e.g., storm season) + the business's services and reviews.
+3. Content production: posts, captions, before/after style posts only from the customer's real photos; stock only as clearly generic imagery; review highlights only from real reviews.
+4. Approval mode for the first month (customer approves in dashboard), then auto-publish within approved rules; customer can pause anytime.
+5. Ads: campaigns inside the customer's own ad accounts, hard budget caps the customer sets; ad spend billed by the platform to the customer.
+6. Reporting: posts published, reach, site visits, calls/forms attributed, ad spend, cost per lead; unknown shown as unknown.
+
 ## 6. LOCKED: initial cold email
 
 Preserve this exact subject and body unless Micah explicitly approves a revision. Populate placeholders only with verified information. Do not reintroduce “Want to see it?”
