@@ -1,6 +1,15 @@
 import { z } from "zod";
 
 /** Everything that changes when the owner switches the active niche. */
+/** Landing-page offer for a niche: headline plus any number of numbered steps. */
+export const OfferStep = z.object({
+  id: z.string().regex(/^[a-z-]+$/), chip: z.string(), tag: z.string(), title: z.string(), lead: z.string(),
+  how: z.array(z.string()).min(1), price: z.string(), per: z.string(), note: z.string(), cta: z.string(),
+  visual: z.enum(["website", "sms", "search", "photo"]),
+});
+export const Offer = z.object({ headline: z.string(), subhead: z.string(), steps: z.array(OfferStep).min(1).max(6) });
+export type Offer = z.infer<typeof Offer>;
+
 export const NicheConfig = z.object({
   niche: z.string().regex(/^[a-z_]+$/),
   brand: z.object({
@@ -26,6 +35,7 @@ export const NicheConfig = z.object({
     requiredSections: z.array(z.string()).min(1),
     templates: z.array(z.string()).min(1),
   }),
+  offer: Offer.nullable().default(null),
   sales: z.object({
     terminology: z.record(z.string(), z.string()),
     faqs: z.array(z.object({ q: z.string(), a: z.string() })),

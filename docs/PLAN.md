@@ -171,6 +171,12 @@ Marketing ($500, "Get More Calls") delivery (supersedes the earlier social-first
 - Email recovery for sites without a listed address: guess common patterns (info@, office@, contact@, estimates@, owner first name from license data) and keep only verification-"valid", non-catch-all results; capped guesses per prospect.
 - Upstream sources, in order: (1) daily WA L&I new-license feed (~846 new contractor licenses in the 30 days before Nov 19, 2026, all trades); (2) weekly re-scans for new Google listings; (3) partner referral program (insurance/bond agents, trade bookkeepers, licensing schools, supply houses) recruited by cold email, commissions paid via Stripe; (4) inbound SEO for the brand site.
 
+### 5.7 Per-niche offer and landing page (November 19, 2026)
+
+- Every niche has its own landing page in the inventory, generated from that niche's configuration under its own brand/domain.
+- The numbered-steps layout (currently 1-2-3: website, AI texting, Google marketing) is the default, not a requirement. A niche's offer config sets the headline, the number of steps, each step's outcome, how-it-works points, price, notes, CTA and visual type (website mockup, SMS conversation, search result, photo).
+- New niche offers (copy, steps, any price differences) are drafted by the strategy agent from niche research and require owner approval before going live, like locked copy and prices.
+
 ## 6. LOCKED: initial cold email
 
 Preserve this exact subject and body unless Micah explicitly approves a revision. Populate placeholders only with verified information. Do not reintroduce “Want to see it?”
@@ -496,6 +502,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 19, 2026 | Per-niche offer/landing page config approved (5.7); roofing homepage set to the outcome-first 1-2-3 page. |
 | November 19, 2026 | Approved customer referral program (5.5) and lead-qualification / upstream-source plan (5.6). |
 | November 19, 2026 | Legal entity: SeniorCarefully LLC (WA, active), doing business as "Roofline Websites". WA business license + trade name to be filed about a week before the pilot (needed for SMS carrier registration and live Stripe; not needed for building or email warm-up). |
 | November 19, 2026 | Brand name set to "Roofline Websites" (WA trade name to be filed under the owner's existing company) because "Roofline" is used by other WA roofing-related businesses. |

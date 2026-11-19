@@ -1,4 +1,4 @@
-import type { NicheConfig } from "../niches/schema.js";
+import type { NicheConfig, Offer } from "../niches/schema.js";
 import type { BuildBrief } from "../build/brief.js";
 
 const esc = (s: string) =>
@@ -111,9 +111,9 @@ footer a{color:var(--ink2);text-decoration:none;margin-right:18px}
 @media (max-width:900px){.links{display:none}.plans,.story,.steps,.examples{grid-template-columns:1fr}.stage{height:420px}.browser{right:0;height:420px}.phone{display:none}section{padding:80px 0}}
 </style></head><body>`;
 
-const navBar = (brand: Brand) => `<nav><div class="wrap">
+const navBar = (brand: Brand, links?: [string, string][]) => `<nav><div class="wrap">
 <a class="logo" href="/"><i><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M6 10.5V20h12v-9.5"/></svg></i>${esc(brand.name)}</a>
-<div class="links"><a href="/#website">1 · Website</a><a href="/#texting">2 · AI texting</a><a href="/#ads">3 · Google marketing</a><a href="/#story">About</a></div>
+<div class="links">${(links ?? [["/#story", "About"], ["/#get", "Free preview"]]).map(([h, t]) => `<a href="${h}">${esc(t)}</a>`).join("")}</div>
 <a class="btn" href="/#get">Get my free preview</a></div></nav>`;
 
 const foot = (brand: Brand) => `<footer><div class="wrap">
@@ -272,7 +272,7 @@ function between(html: string, start: string, endTag = "</section>"): string {
   const b = html.indexOf(endTag, a); return b < 0 ? "" : html.slice(a, b + endTag.length);
 }
 
-export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean; error?: string } = {}): string {
+export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean; error?: string } = {}, offer: Offer | null = null): string {
   const w = words(niche);
   const v1 = renderHome(brand, niche, opts);
   const story = between(v1, '<section id="story"');
@@ -375,44 +375,24 @@ export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean
 @media (max-width:900px){.step-grid{grid-template-columns:1fr;gap:36px}.step.flip .step-copy{order:0}.step-visual{height:460px}.laptop{width:84%;left:8%}.phone2{width:170px;height:350px}.phone2 iframe{transform:scale(.4)}.step{padding:72px 0}}
 </style>`;
 
-  const s1 = step(1, { id: "website", tag: "Managed website", title: "Turn searches into phone calls.",
-    lead: `Most homeowners look you up on their phone before they call. A site built for ${w.many} makes calling you the obvious next step.`,
-    how: ["<b>Tap-to-call and estimate buttons</b> on every screen, so calling takes one tap",
-      "<b>Your real Google reviews</b>, shown live, so homeowners trust you before they call",
-      "<b>Built for phones first</b>, fast and clean where your customers actually look",
-      "<b>Already built for you</b>: we make it from your public info, you see it before you pay",
-      "<b>Zero upkeep</b>: hosting, security and free edits whenever you ask"],
-    price: "$150", per: "/ month", note: "No setup fee. Keep your domain. Cancel anytime.", cta: "See my free preview", visual: websiteVisual });
-  const s2 = step(2, { id: "texting", tag: "AI missed-call texting", flip: true, title: "Never lose a job to voicemail.",
-    lead: `You're on a roof when the phone rings. Most callers won't leave a message, they call the next ${w.one}. This keeps them talking to you.`,
-    how: ["<b>Texts every missed caller back in seconds</b>, day or night",
-      "<b>Answers common questions</b> using your approved info, never guesses prices",
-      "<b>Collects the job details</b>: address, the problem, timing and photos",
-      "<b>Sends you a ready-to-call lead</b> by text, with the whole conversation",
-      "<b>A monthly report</b> of missed callers saved and jobs captured"],
-    price: "$200", per: "/ month", note: "Works with your current number. Add it anytime, cancel anytime.", cta: "Start with my free preview", visual: smsVisual });
-  const s3 = step(3, { id: "ads", tag: "Get More Calls · managed Google marketing", title: "Show up first when they search.",
-    lead: `When a roof leaks, homeowners search Google and call the top results. We put you there and keep you there.`,
-    how: ["<b>Google Business Profile, managed</b>: services, areas, photos and updates tuned for the local map",
-      "<b>More 5-star reviews</b>: automatic review requests after every job",
-      "<b>Google ads that bring calls</b>: Local Services Ads (pay per lead) and search ads within your budget",
-      "<b>Know what's working</b>: calls, leads, cost per lead and new reviews every month"],
-    price: "$500", per: "/ month", note: "Ad spend is separate, paid to Google, and always yours to set.", cta: "Start with my free preview", visual: adsVisual });
-
-  return head(brand, `${brand.name} · Get more ${w.trade} clients`, `Get more ${w.trade} clients: a website that turns searches into calls, AI that texts back missed callers, and Google marketing that puts you first.`)
+  if (!offer) throw new Error(`no offer configured for niche ${niche}`);
+  const visuals: Record<string, string> = { website: websiteVisual, sms: smsVisual, search: adsVisual,
+    photo: `<div class="v-photo" style="background-image:url('${img(pickPhoto("home", "v2-photo"), 1400, 1100)}')"></div>` };
+  const steps = offer.steps.map((st, i) => step(i + 1, { ...st, flip: i % 2 === 1, visual: visuals[st.visual]! })).join("");
+  return head(brand, `${brand.name} · ${offer.headline.replace(/\.$/, "")}`, `${offer.headline} ${offer.subhead}`)
     .replace("</head>", `${css}</head>`) + `
 <div class="sky">
 <span class="cloud" style="width:520px;height:160px;left:6%;top:120px"></span>
 <span class="cloud" style="width:420px;height:140px;right:4%;top:60px;animation-duration:80s"></span>
-${navBar(brand)}
+${navBar(brand, [...offer.steps.map((st, i) => [`/#${st.id}`, `${i + 1} · ${st.tag.split(" · ")[0]}`] as [string, string]), ["/#story", "About"]])}
 <div class="hero2"><div class="wrap">
 <span class="pill"><b>For ${esc(w.many)}</b> Built before you even ask</span>
-<h1>Get more ${esc(w.trade)} clients.</h1>
-<p>Three simple steps that bring in more calls and more jobs. Start with step 1 today, add steps 2 and 3 whenever you're ready.</p>
-<div class="cta"><a class="btn accent" href="#get">See my free preview</a><a class="btn ghost" href="#website">How it works</a></div>
-<div class="steps3"><a href="#website"><b>1</b>Get found and called</a><a href="#texting"><b>2</b>Never miss a lead</a><a href="#ads"><b>3</b>Show up first</a></div>
+<h1>${esc(offer.headline)}</h1>
+<p>${esc(offer.subhead)}</p>
+<div class="cta"><a class="btn accent" href="#get">See my free preview</a><a class="btn ghost" href="#${offer.steps[0]!.id}">How it works</a></div>
+<div class="steps3">${offer.steps.map((st, i) => `<a href="#${st.id}"><b>${i + 1}</b>${esc(st.chip)}</a>`).join("")}</div>
 </div></div></div>
-${s1}${s2}${s3}
+${steps}
 ${story}
 ${get}
 ` + foot(brand).replace("</body>", `<script>/* test page */</script></body>`);
