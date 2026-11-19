@@ -92,3 +92,23 @@ export async function findEmails(pool: pg.Pool, limit = 50, opts: { verify?: boo
   }
   return s;
 }
+
+/** Verify stored-but-unverified emails (e.g. found earlier without verification). */
+export async function verifyPending(pool: pg.Pool, limit = 100) {
+  const ps = (await pool.query(
+    `SELECT id, contact_email FROM prospects WHERE contact_email IS NOT NULL AND NOT contact_verified
+       AND NOT EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id=prospects.id::text AND e.track='email_verify')
+     ORDER BY id LIMIT $1`, [limit])).rows;
+  const s: Record<string, number> = { checked: 0, valid: 0, catch_all: 0, invalid: 0, other: 0 };
+  for (const p of ps) {
+    const v = await verifyEmail(p.contact_email).catch((e) => ({ status: `error: ${e.message}`, catchAll: false }));
+    s.checked!++;
+    const ok = v.status === "valid" && !v.catchAll;
+    if (ok) s.valid!++; else if (v.catchAll) s.catch_all!++; else if (v.status === "invalid") s.invalid!++; else s.other!++;
+    if (v.status === "invalid") await pool.query(`UPDATE prospects SET contact_email = NULL, contact_verified = false WHERE id = $1`, [p.id]);
+    else await pool.query(`UPDATE prospects SET contact_verified = $2 WHERE id = $1`, [p.id, ok]);
+    await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'email_verify','email_finder',$2)`,
+      [String(p.id), { email: p.contact_email, status: v.status, catch_all: v.catchAll }]);
+  }
+  return s;
+}
