@@ -61,14 +61,19 @@ export async function runDaily(pool: pg.Pool, limits: DailyLimits = DEFAULT_LIMI
       AND (prospect_state = 'qualified' OR (outreach_template = 'no_website' AND prospect_state IN ('discovered','qualified')))
       AND (license_status IS NULL OR license_status = 'ACTIVE')
       AND niche_version_id IN (SELECT id FROM niche_versions WHERE niche_id = $3) ORDER BY fit_score DESC LIMIT $2`, [limits.minScore, limits.builds, niche.config.niche])).rows;
-    const out = { attempted: ps.length, approved: 0, edits: 0, failed: 0 };
+    const out = { attempted: ps.length, approved: 0, edits: 0, failed: 0, errors: [] as string[] };
     for (const p of ps) {
       try {
         // No-website prospects never get an audit; qualify them on fit before building.
         await pool.query(`UPDATE prospects SET prospect_state = 'qualified' WHERE id = $1 AND prospect_state = 'discovered' AND outreach_template = 'no_website'`, [p.id]);
         const r: any = await buildAndReview(pool, p.id);
         if (r.verdict === "approved") out.approved++; else out.edits++;
-      } catch { out.failed++; }
+      } catch (e) {
+        out.failed++;
+        const msg = e instanceof Error ? e.message : String(e);
+        out.errors.push(`#${p.id}: ${msg.slice(0, 200)}`);
+        await pool.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('prospect',$1,$2)`, [String(p.id), `build failed: ${msg.slice(0, 300)}`]);
+      }
     }
     return out;
   });
