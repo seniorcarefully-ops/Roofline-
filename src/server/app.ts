@@ -66,11 +66,12 @@ export function createApp(pool: pg.Pool) {
       }
 
       // Public brand site (indexable).
-      if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/v2" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
+      if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/v1" || url.pathname === "/v2" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
         const an = await activeNiche(pool).catch(() => null);
         const brand = an?.config.brand ?? FALLBACK_BRAND, niche = an?.config.niche ?? "roofing";
-        if (url.pathname === "/") return send(res, 200, renderHome(brand, niche, { sent: url.searchParams.get("sent") === "1" }));
-        if (url.pathname === "/v2") return send(res, 200, renderHomeV2(brand, niche, { sent: url.searchParams.get("sent") === "1" }), undefined, { "X-Robots-Tag": "noindex" });
+        if (url.pathname === "/") return send(res, 200, renderHomeV2(brand, niche, { sent: url.searchParams.get("sent") === "1" }));
+        if (url.pathname === "/v2") return send(res, 301, "", "text/plain", { Location: "/" });
+        if (url.pathname === "/v1") return send(res, 200, renderHome(brand, niche, { sent: url.searchParams.get("sent") === "1" }), undefined, { "X-Robots-Tag": "noindex" });
         if (url.pathname === "/demo") {
           const html = renderRidge(demoBrief(niche), brand, { purchaseUrl: "/#get" })
             .replace("</head>", "<style>#rl-bar,#rl-fade{display:none!important}body{padding-bottom:0!important}</style></head>");

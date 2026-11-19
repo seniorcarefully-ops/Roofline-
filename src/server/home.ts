@@ -113,7 +113,7 @@ footer a{color:var(--ink2);text-decoration:none;margin-right:18px}
 
 const navBar = (brand: Brand) => `<nav><div class="wrap">
 <a class="logo" href="/"><i><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M6 10.5V20h12v-9.5"/></svg></i>${esc(brand.name)}</a>
-<div class="links"><a href="/#offer">Pricing</a><a href="/#story">About</a><a href="/#examples">Examples</a><a href="/#how">How it works</a></div>
+<div class="links"><a href="/#website">1 · Website</a><a href="/#texting">2 · AI texting</a><a href="/#ads">3 · Google marketing</a><a href="/#story">About</a></div>
 <a class="btn" href="/#get">Get my free preview</a></div></nav>`;
 
 const foot = (brand: Brand) => `<footer><div class="wrap">
@@ -404,7 +404,7 @@ export function renderHomeV2(brand: Brand, niche: string, opts: { sent?: boolean
 <div class="sky">
 <span class="cloud" style="width:520px;height:160px;left:6%;top:120px"></span>
 <span class="cloud" style="width:420px;height:140px;right:4%;top:60px;animation-duration:80s"></span>
-${navBar(brand).replace('<a href="/#offer">Pricing</a><a href="/#story">About</a><a href="/#examples">Examples</a><a href="/#how">How it works</a>', '<a href="#website">1 · Website</a><a href="#texting">2 · AI texting</a><a href="#ads">3 · Google marketing</a><a href="#story">About</a>')}
+${navBar(brand)}
 <div class="hero2"><div class="wrap">
 <span class="pill"><b>For ${esc(w.many)}</b> Built before you even ask</span>
 <h1>Get more ${esc(w.trade)} clients.</h1>
