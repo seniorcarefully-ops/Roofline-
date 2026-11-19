@@ -83,3 +83,13 @@ export function renderNoWebsiteEmail(v: NoSiteVars): { subject: string; body: st
   if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
   return out;
 }
+
+/**
+ * Required commercial-email footer (sender identity, postal address, opt-out).
+ * Appended below the locked body; it does not change the approved wording.
+ */
+export function emailFooter(postalAddress: string | null, unsubscribeUrl: string): string {
+  if (!postalAddress?.trim()) throw new Error("postal address missing: cannot send commercial email");
+  if (!/^https:\/\//.test(unsubscribeUrl)) throw new Error("unsubscribe link must be https");
+  return `\n\n--\n${postalAddress}\nNot interested? Reply "unsubscribe" or click: ${unsubscribeUrl}`;
+}

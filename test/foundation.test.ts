@@ -203,3 +203,14 @@ describe("niche refresh", () => {
     expect(await v(contacted)).toBe(v1);
   });
 });
+
+import { emailFooter } from "../src/outreach/template.js";
+describe("email footer", () => {
+  it("requires a postal address and https unsubscribe link", () => {
+    const f = emailFooter("Roofline Websites, PO Box 2106, Woodinville, WA 98072", "https://rooflinewebsites.com/u/abc");
+    expect(f).toContain("PO Box 2106, Woodinville, WA 98072");
+    expect(f).toContain("unsubscribe");
+    expect(() => emailFooter(null, "https://x.test/u")).toThrow(/postal address/);
+    expect(() => emailFooter("addr", "http://x.test/u")).toThrow(/https/);
+  });
+});

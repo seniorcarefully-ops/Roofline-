@@ -43,7 +43,7 @@ async function approvedPreview(pool: pg.Pool, token: string) {
   return row;
 }
 
-const FALLBACK_BRAND: Brand = { name: "Roofline Websites", domain: "rooflinewebsites.com", colors: { primary: "#1F2A37", accent: "#E4572E" }, tagline: "Websites built for roofing companies." };
+const FALLBACK_BRAND: Brand = { name: "Roofline Websites", domain: "rooflinewebsites.com", colors: { primary: "#1F2A37", accent: "#E4572E" }, tagline: "Websites built for roofing companies.", postalAddress: "Roofline Websites, PO Box 2106, Woodinville, WA 98072" };
 async function currentBrand(pool: pg.Pool): Promise<Brand> {
   return (await activeNiche(pool).catch(() => null))?.config.brand ?? FALLBACK_BRAND;
 }

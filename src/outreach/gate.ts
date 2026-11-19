@@ -25,6 +25,7 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
 
   const s = (await db.query(`SELECT outreach_paused FROM settings`)).rows[0];
   if (s.outreach_paused) reasons.push("outreach is paused");
+  if (!NicheConfig.parse(p.config).brand.postalAddress) reasons.push("no postal address for email footer");
   if (p.prospect_state !== "qualified") reasons.push(`prospect is ${p.prospect_state}, not qualified`);
   if (p.website_state !== "ready_to_send") reasons.push(`website is ${p.website_state}, not ready_to_send`);
   if (p.email_state !== "eligible") reasons.push("email suppressed for prospect");

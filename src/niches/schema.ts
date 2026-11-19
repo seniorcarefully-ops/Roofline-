@@ -8,6 +8,8 @@ export const NicheConfig = z.object({
     domain: z.string().nullable(),          // null until purchased
     colors: z.object({ primary: z.string(), accent: z.string() }),
     tagline: z.string(),
+    // Required in every commercial email footer (CAN-SPAM). Null blocks sending.
+    postalAddress: z.string().nullable().default(null),
   }),
   prospecting: z.object({
     placeTypes: z.array(z.string()).min(1),

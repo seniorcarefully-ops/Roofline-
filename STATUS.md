@@ -43,6 +43,9 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Reviewer now scrolls the page and waits for every image before judging.
 - Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
+## Compliance
+- Email footer postal address: Roofline Websites, PO Box 2106, Woodinville, WA 98072 (owner's family business PO box, owner-approved 2026-11-19). Owner to confirm "Roofline Websites" is listed on the box's PS Form 1093. Send gate blocks email when no postal address is configured.
+
 ## Hosting (Render, workspace "Roofline", region Oregon)
 - Audit + SMS opt-in page /s/<preview token> (the email link): personal hero, blurred phone mockup of the approved preview, up to 3 findings with evidence screenshots (stored in DB), cell + explicit consent checkbox; consent stored verbatim with source. Until Twilio is configured, the page shows the preview link immediately instead of promising a text. Verified locally end to end (Barton Roofing).
 - Heavy jobs (audit, build) run as Render one-off jobs on plan-srv-008 (larger, billed per second); Starter (512 MB) runs out of memory with Chromium. Live run 2026-11-18: 36 audited, 4 qualified, 6 unreachable; Barton Roofing preview + opt-in page live with 3 evidenced findings.

@@ -7,6 +7,7 @@ export const roofing: NicheConfig = {
     domain: "rooflinewebsites.com",
     colors: { primary: "#1F2A37", accent: "#E4572E" },
     tagline: "Websites built for roofing companies.",
+    postalAddress: "Roofline Websites, PO Box 2106, Woodinville, WA 98072",
   },
   prospecting: {
     placeTypes: ["roofing_contractor"],
