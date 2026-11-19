@@ -82,8 +82,8 @@ h2{font-size:clamp(36px,5vw,62px)}
 .card{background:var(--card);border:1px solid #fff;border-radius:24px;padding:30px;box-shadow:0 10px 30px rgba(17,24,39,.05)}
 .card h3{font-size:24px;margin-bottom:6px}.card p{margin:0;color:var(--ink2)}.card .tag{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px}
 .story{display:grid;grid-template-columns:.9fr 1.1fr;gap:64px;align-items:center}
-.portrait{position:relative;aspect-ratio:4/5;border-radius:28px;overflow:hidden;background:linear-gradient(160deg,#cfd6df,#e9edf2);box-shadow:0 30px 70px rgba(17,24,39,.14)}
-.portrait img{width:100%;height:100%;object-fit:cover}
+.portrait{position:relative;max-width:440px;justify-self:center;transform:rotate(-2.5deg);filter:drop-shadow(0 30px 40px rgba(17,24,39,.22))}
+.portrait img{width:100%;height:auto;display:block}
 .portrait .ph{position:absolute;inset:0;display:grid;place-items:center;color:#8b95a3;font-weight:600}
 .portrait .ph svg{width:120px;height:120px;fill:#c1c9d3}
 .story h2{margin:14px 0 22px}.story p{color:var(--ink2);font-size:19px;margin:0 0 16px}.story .sig{font:700 22px "Inter Tight",sans-serif;color:var(--ink)}
@@ -149,7 +149,7 @@ ${navBar(brand)}
 </div></div></div></section>
 
 <section id="story" style="background:#fff"><div class="wrap story">
-<div class="portrait"><img src="/assets/cole.jpg" alt="${PERSONA.first} from ${esc(brand.name)}" width="960" height="1200" loading="lazy"><div class="ph"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21a8.5 8.5 0 0 1 17 0z"/></svg></div></div>
+<div class="portrait"><img src="/assets/cole.jpg" alt="Polaroid of ${PERSONA.first} in front of a house mid-reroof" width="960" height="1170" loading="lazy"></div>
 <div><span class="kicker">Meet ${PERSONA.first}</span>
 <h2>${W === "Roofer" ? "Roofing runs in the family." : `${W}s run in the family.`}</h2>
 <p>${PERSONA.first}'s dad was a ${esc(w.one)}. So was his grandpa, and his great-grandpa before him.</p>
