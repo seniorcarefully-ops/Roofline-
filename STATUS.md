@@ -67,7 +67,7 @@ Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, liv
 | Cloud environment `roofline` | Created; allows Anthropic, Stripe, Twilio, Instantly, Google Places |
 | Google Places | Live: test search returned real results 2026-11-18 (key stored as network secret, header X-Goog-Api-Key) |
 | Stripe | Sandbox promo code ROOFLINETEST (100% off forever, max 10 uses, sandbox only) for owner testing. Sandbox connected and tested 2026-11-18. Live: waiting on WA trade name + Stripe activation; final check = single-use 100%-off code, then delete it |
-| Twilio | Waiting on account; A2P registration needs DBA + address |
+| Twilio | Roofline subaccount created via API under owner's existing account (2026-11-18); subaccount-scoped API key stored only in Render env (TWILIO_ACCOUNT_SID/API_KEY/API_SECRET). Number (509) 390-8200 purchased with owner approval (2026-11-19). TWILIO_FROM_NUMBER intentionally NOT set until the SMS send/receive handlers exist. A2P 10DLC registration pending DBA. Owner's main-account admin key (roofline-admin) is still in the session environment; can be deleted by owner. |
 | Instantly + sending domains | Instantly Outreach Growth ($47/mo) by owner; API key in env (proxy). DFY order placed via API 2026-11-18 (owner-approved $50): tryrooflinesites.com + gorooflinesites.com, 4 Google mailboxes (micah@, micah.u@), sender Micah Ulland; $20/mo + $30/yr. Provisioning pending; warm-up to enable via API once accounts appear. |
 | Anthropic (production key) | Needed once hosting is chosen |
 
