@@ -175,14 +175,15 @@ ${navBar(brand)}
 </article>
 
 <article class="plan">
-<span class="ptag">Automated marketing</span>
-<h3>Stay top of mind. Fill your schedule.</h3>
+<span class="ptag">Get More Calls · marketing</span>
+<h3>Show up first when they search.</h3>
 <div class="amt">$500<small>&nbsp;/ month</small></div>
-<p class="why">Homeowners need a ${esc(w.one)} when something goes wrong, and they call the name they've seen. We keep yours in front of them.</p>
+<p class="why">When a roof leaks, homeowners grab their phone and search Google. The ${esc(w.many)} at the top of the map and the ads get the calls. We put you there and keep you there.</p>
 <ul>
-<li><span><b>Content posted for you</b> on your connected channels</span></li>
-<li><span><b>Local ad campaigns</b> managed within the budget you set</span></li>
-<li><span><b>Know what's working</b>: reports on visits, leads and cost per lead</span></li>
+<li><span><b>Google Business Profile, managed</b>: services, areas, photos and updates tuned for the local map</span></li>
+<li><span><b>More 5-star reviews</b>: automatic review requests to your customers after each job</span></li>
+<li><span><b>Google ads that bring calls</b>: Local Services Ads (pay per lead) and search ads, within the budget you set</span></li>
+<li><span><b>Know what's working</b>: calls, leads, cost per lead and new reviews every month</span></li>
 <li><span>Ad spend is separate and always yours to control</span></li>
 </ul>
 <a class="btn ghost" href="#get">Start with a free preview</a>

@@ -66,17 +66,19 @@ An independent service that can work with the customer's existing website. Throu
 
 Use approved customer-specific knowledge. Do not invent availability, prices, quotes, or appointments. Escalate uncertainty and requests requiring a person. Define usage allowance, number setup, supported phone systems, escalation rules, and messaging consent before activation.
 
-### 4.3 Automated marketing system — $500/month
+### 4.3 "Get More Calls" marketing — $500/month (revised November 19, 2026)
 
-One coordinated service that:
+One coordinated service focused on where homeowners look when they need a pro (Google), not on social posting:
 
-- Researches the business, niche, audience, competitors, and relevant content opportunities.
-- Creates and publishes content on agreed connected channels.
-- Creates and manages authorized paid campaigns within approved budgets.
-- Collects analytics, reports results, and adjusts activity within agreed rules.
-- Highlights the value delivered rather than only showing activity counts.
+- Google Business Profile management: services, service areas, photos, hours, regular updates, Q&A, tuned for local map ranking.
+- Automated review requests to the business's own customers after jobs (text/email from contacts the business provides), following Google policy: no incentives, no review gating.
+- Google Local Services Ads (pay-per-lead, "Google Guaranteed") managed in the business's own account, including lead disputes.
+- Google Search ads on high-intent local searches, in the business's own account, with negative keywords and a hard budget cap set by the customer.
+- Retargeting of site visitors (Google/Meta) within the same budget.
+- Social posting as a small supporting extra.
+- Monthly report: calls, leads, cost per lead, new reviews, map ranking for key searches; unknown shown as unknown.
 
-Content and paid advertising share strategy, business information, assets, and reporting. Ad spend is separate and paid by the customer. Define platforms, posting volume, asset types, campaign scope, approvals, and optimization limits before selling the final scope.
+Ad spend is separate and billed by the ad platform to the customer. No ranking or lead guarantees; results depend on market, competition, budget and reviews. Requires Google API approvals (Business Profile API access, Google Ads manager account/developer token) — apply early; launch after website and AI SMS are working.
 
 ### 4.4 Independent purchasing
 
@@ -148,8 +150,8 @@ Voicemail → SMS (Roofline's own number, and the $200 product):
 5. Summary to the business owner (SMS/email) with transcript; logged for value reporting.
 Product specifics: per customer, a dedicated local number, its own A2P registration under the customer's business (ISV model), approved knowledge base edited in the customer dashboard, escalation rules, monthly value report (missed calls answered, conversations, jobs captured, business-confirmed bookings).
 
-Marketing ($500) content management:
-1. Onboarding connects channels the customer authorizes: Google Business Profile, Facebook/Instagram (Meta), optionally Google Ads / Meta Ads accounts owned by the customer.
+Marketing ($500, "Get More Calls") delivery (supersedes the earlier social-first outline):
+1. Onboarding connects what the customer authorizes: Google Business Profile, Google Local Services Ads and Google Ads accounts owned by the customer; Meta optional (retargeting/social).
 2. Monthly plan generated from niche playbook + local season (e.g., storm season) + the business's services and reviews.
 3. Content production: posts, captions, before/after style posts only from the customer's real photos; stock only as clearly generic imagery; review highlights only from real reviews.
 4. Approval mode for the first month (customer approves in dashboard), then auto-publish within approved rules; customer can pause anytime.
@@ -481,6 +483,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 19, 2026 | Marketing service refocused as "Get More Calls": Google Business Profile, review requests, Local Services Ads, Search ads, retargeting; social secondary. Acquisition is cold email only. |
 | November 18, 2026 | Approved $150/month email jumpstart budget; main brand domain rooflinewebsites.com approved. |
 | November 18, 2026 | Confirmed niche-hopping growth model and 100k+/month email goal (5.1). |
 | November 18, 2026 | Approved and locked the no-website email variant (6.1). Confirmed continuous outreach improvement through approved, controlled experiments measured on purchases and retention. Implementation authorized and under way; see STATUS.md. |
