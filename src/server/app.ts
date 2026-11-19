@@ -14,6 +14,7 @@ import { previewUrlFor } from "../build/pipeline.js";
 import { consentText, loadOptin, renderOptin } from "./optin.js";
 import { brandPage } from "./pages.js";
 import { grantSms, toE164 } from "../outreach/consent.js";
+import { demoBrief, renderDoc, renderHome, words } from "./home.js";
 
 const send = (res: ServerResponse, status: number, body: string, type = "text/html; charset=utf-8", extra: Record<string, string> = {}) => {
   res.writeHead(status, { "Content-Type": type, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin", ...extra });
@@ -54,6 +55,34 @@ export function createApp(pool: pg.Pool) {
       const m = url.pathname.match(/^\/p\/([A-Za-z0-9_-]{16,64})(\/buy)?\/?$/);
 
       if (req.method === "GET" && url.pathname === "/healthz") return send(res, 200, "ok", "text/plain");
+
+      // Public brand site (indexable).
+      if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/privacy" || url.pathname === "/terms" || url.pathname === "/demo")) {
+        const an = await activeNiche(pool).catch(() => null);
+        const brand = an?.config.brand ?? FALLBACK_BRAND, niche = an?.config.niche ?? "roofing";
+        if (url.pathname === "/") return send(res, 200, renderHome(brand, niche, { sent: url.searchParams.get("sent") === "1" }));
+        if (url.pathname === "/demo") {
+          const html = renderRidge(demoBrief(niche), brand, { purchaseUrl: "/#get" })
+            .replace("</head>", "<style>#rl-bar,#rl-fade{display:none!important}body{padding-bottom:0!important}</style></head>");
+          return send(res, 200, html, undefined, { "X-Robots-Tag": "noindex" });
+        }
+        return send(res, 200, renderDoc(brand, url.pathname === "/privacy" ? "privacy" : "terms"));
+      }
+      if (req.method === "POST" && url.pathname === "/request") {
+        const an = await activeNiche(pool).catch(() => null);
+        const brand = an?.config.brand ?? FALLBACK_BRAND, niche = an?.config.niche ?? "roofing";
+        const f = new URLSearchParams(await readBody(req, 10_000));
+        const business = (f.get("business") ?? "").trim().slice(0, 120), city = (f.get("city") ?? "").trim().slice(0, 80);
+        const website = (f.get("website") ?? "").trim().slice(0, 200) || null, phone = toE164(f.get("phone") ?? "");
+        if (!business || !city || !phone) return send(res, 400, renderHome(brand, niche, { error: "Please fill in your business, city and a valid US cell number." }));
+        if (f.get("consent") !== "yes") return send(res, 400, renderHome(brand, niche, { error: "Please check the box to agree to receive texts." }));
+        const consent = `I agree to receive text messages from ${brand.name} about my website preview, including follow-up questions and offers. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.`;
+        const r = await pool.query(`INSERT INTO inbound_requests(business_name, city, website, phone_e164, consent_text, niche, user_agent)
+          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, [business, city, website, phone, consent, niche, String(req.headers["user-agent"] ?? "").slice(0, 200)]);
+        await pool.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('inbound_request',$1,$2)`,
+          [String(r.rows[0].id), `inbound preview request: ${business}, ${city} (${words(niche).one})`]);
+        return send(res, 303, "", "text/plain", { Location: "/?sent=1#get" });
+      }
 
       // Audit + SMS opt-in page (the link in the email).
       const s = url.pathname.match(/^\/s\/([A-Za-z0-9_-]{16,64})(?:\/(optin|thumb\.jpg|img\/([A-Za-z0-9._-]{1,80})))?\/?$/);
@@ -161,7 +190,7 @@ export function createApp(pool: pg.Pool) {
         return send(res, 200, "ok", "text/plain");
       }
 
-      return send(res, 404, messagePage(await currentBrand(pool), "Not found", "Page not found.", "This page doesn't exist."));
+      return send(res, 404, messagePage(await currentBrand(pool), "Not found", "Page not found.", "This page doesn't exist.", "/"));
     } catch (e) {
       console.error("request failed:", e instanceof Error ? e.message : e);
       if (!res.headersSent) send(res, 500, messagePage(FALLBACK_BRAND, "Something went wrong", "Something went wrong.", "Please try again in a moment."));
