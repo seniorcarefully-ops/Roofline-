@@ -19,11 +19,11 @@ describe("per-niche offer page", () => {
 });
 
 describe("persona photo per niche", () => {
-  it("roofing shows its own polaroid; a niche without one shows none", async () => {
+  it("each niche shows only its own polaroid", async () => {
     const { leakDetection } = await import("../src/niches/leak_detection.js");
     expect(renderHomeV2(roofing.brand, "roofing", {}, roofing.offer)).toContain('/assets/persona/roofing.jpg');
     const leak = renderHomeV2(leakDetection.brand, "leak_detection", {}, leakDetection.offer);
     expect(leak).not.toContain("/assets/persona/roofing.jpg");
-    expect(leak).toContain("story nophoto");
+    expect(leak).toContain("/assets/persona/leak_detection.jpg");
   });
 });
