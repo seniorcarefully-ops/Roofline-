@@ -37,3 +37,14 @@ export async function listOwnedNumbers() {
   const d = await twilio("GET", "/IncomingPhoneNumbers.json", { PageSize: "20" });
   return (d.incoming_phone_numbers ?? []).map((n: any) => ({ sid: n.sid, number: n.phone_number, name: n.friendly_name }));
 }
+
+export async function sendSms(to: string, body: string, from = process.env.TWILIO_FROM_NUMBER) {
+  if (!from) throw new Error("TWILIO_FROM_NUMBER not set");
+  const d = await twilio("POST", "/Messages.json", { To: to, From: from, Body: body });
+  return { sid: d.sid as string, status: d.status as string };
+}
+
+export async function messageStatus(sid: string) {
+  const d = await twilio("GET", `/Messages/${sid}.json`);
+  return { status: d.status, errorCode: d.error_code, errorMessage: d.error_message };
+}
