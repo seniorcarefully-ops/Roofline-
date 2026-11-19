@@ -4,7 +4,7 @@ import type { NicheConfig } from "../niches/schema.js";
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export const SENDER_NAME = process.env.SENDER_NAME ?? "Micah";
+export const SENDER_NAME = process.env.SENDER_NAME ?? "Cole";
 
 /** Exact consent wording shown next to the checkbox; stored verbatim with each opt-in. */
 export const consentText = (brand: string) =>
