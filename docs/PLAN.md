@@ -158,6 +158,19 @@ Marketing ($500, "Get More Calls") delivery (supersedes the earlier social-first
 5. Ads: campaigns inside the customer's own ad accounts, hard budget caps the customer sets; ad spend billed by the platform to the customer.
 6. Reporting: posts published, reach, site visits, calls/forms attributed, ad spend, cost per lead; unknown shown as unknown.
 
+### 5.5 Customer referral program (approved November 19, 2026)
+
+- Offer: "Give a month, get 3 months free." The referred business gets its first month of the website plan free; the referrer earns 3 free months of the website plan once the referred customer has paid past its first month. Rewards stack (2 referrals = 6 months, and so on).
+- Delivery: a prominent, ad-style card in the customer dashboard (Cole's photo, big Share button, personal link, prewritten message the customer sends from their own phone/email, progress tracker), plus well-timed reminders (after a strong monthly report or a new review).
+- Mechanics: referral link opens a personalized landing page ("[Company] sent you; first month free"); referred visitors request a preview with recorded consent; rewards applied automatically as Stripe customer credits shown on the next bill.
+- Guardrails: only real paying customers earn rewards; no tie to reviews; program terms published on the Terms page; referral spend counts toward the growth governor.
+
+### 5.6 Lead qualification and upstream sources (November 19, 2026)
+
+- Every prospect gets a fit score (active license; 5-150 Google reviews at 3.5+; proven website problems or no website; verified email + owner name; not a franchise/chain; in target area). Only high scores are emailed; the strategy agent re-weights the score against actual purchases.
+- Email recovery for sites without a listed address: guess common patterns (info@, office@, contact@, estimates@, owner first name from license data) and keep only verification-"valid", non-catch-all results; capped guesses per prospect.
+- Upstream sources, in order: (1) daily WA L&I new-license feed (~846 new contractor licenses in the 30 days before Nov 19, 2026, all trades); (2) weekly re-scans for new Google listings; (3) partner referral program (insurance/bond agents, trade bookkeepers, licensing schools, supply houses) recruited by cold email, commissions paid via Stripe; (4) inbound SEO for the brand site.
+
 ## 6. LOCKED: initial cold email
 
 Preserve this exact subject and body unless Micah explicitly approves a revision. Populate placeholders only with verified information. Do not reintroduce “Want to see it?”
@@ -483,6 +496,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 19, 2026 | Approved customer referral program (5.5) and lead-qualification / upstream-source plan (5.6). |
 | November 19, 2026 | Legal entity: SeniorCarefully LLC (WA, active), doing business as "Roofline Websites". WA business license + trade name to be filed about a week before the pilot (needed for SMS carrier registration and live Stripe; not needed for building or email warm-up). |
 | November 19, 2026 | Brand name set to "Roofline Websites" (WA trade name to be filed under the owner's existing company) because "Roofline" is used by other WA roofing-related businesses. |
 | November 19, 2026 | Marketing service refocused as "Get More Calls": Google Business Profile, review requests, Local Services Ads, Search ads, retargeting; social secondary. Acquisition is cold email only. |
