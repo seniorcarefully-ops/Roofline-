@@ -67,7 +67,12 @@ try {
       FROM (SELECT DISTINCT ON (subject_id) subject_id, detail FROM events WHERE track='email_verify' ORDER BY subject_id, id DESC) e
       WHERE e.subject_id = p.id::text AND e.detail->>'status' IN ('valid','verified') AND NOT (e.detail->>'catch_all')::bool
         AND p.contact_email = e.detail->>'email'`);
-    console.log({ markedVerified: r.rowCount });
+    // Published-on-own-site catch-all addresses (approved 2026-11-20): sendable, flagged, capped in the queue.
+    const c = await pool.query(`UPDATE prospects p SET contact_verified = true, contact_catch_all = true
+      FROM (SELECT DISTINCT ON (subject_id) subject_id, detail FROM events WHERE track IN ('email_verify','email_search') ORDER BY subject_id, id DESC) e
+      WHERE e.subject_id = p.id::text AND e.detail->>'status' IN ('valid','verified') AND (e.detail->>'catch_all')::bool
+        AND p.contact_email IS NOT NULL AND lower(p.contact_email) = lower(coalesce(e.detail->>'email', e.detail->>'chosen'))`);
+    console.log({ markedVerified: r.rowCount, catchAllPublished: c.rowCount });
   }
   else if (cmd === "score") console.log(JSON.stringify(await (await import("./research/score.js")).scoreAll(pool)));
   else if (cmd === "guess-emails") console.log(await (await import("./research/emails.js")).guessEmails(pool, Number(args[0] ?? 50)));

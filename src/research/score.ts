@@ -2,7 +2,7 @@ import type pg from "pg";
 
 export interface ScoreInput {
   licenseStatus: string | null; rating: number | null; reviews: number | null;
-  findings: number; hasWebsite: boolean; emailVerified: boolean; ownerName: boolean;
+  findings: number; hasWebsite: boolean; emailVerified: boolean; ownerName: boolean; catchAll?: boolean;
   name: string;
 }
 
@@ -16,8 +16,9 @@ export function fitScore(p: ScoreInput): { score: number; reasons: string[] } {
   else if (rev > 150) { s += 10; r.push("150+ reviews (may have an agency) +10"); }
   if (!p.hasWebsite) { s += 25; r.push("no website +25"); }
   else if (p.findings >= 3) { s += 25; r.push("3+ proven site problems +25"); }
+  else if (p.findings === 2) { s += 20; r.push("2 proven site problems +20"); }
   else if (p.findings > 0) { s += 10 * p.findings; r.push(`${p.findings} site problem(s) +${10 * p.findings}`); }
-  if (p.emailVerified) { s += 20; r.push("verified email +20"); }
+  if (p.emailVerified) { s += p.catchAll ? 12 : 20; r.push(p.catchAll ? "published email (catch-all domain) +12" : "verified email +20"); }
   if (p.ownerName) { s += 10; r.push("owner first name known +10"); }
   if (/\b(inc|corp|corporation|national|usa|america)\b/i.test(p.name) && rev > 300) { s -= 20; r.push("likely large/chain -20"); }
   return { score: Math.max(0, Math.min(100, s)), reasons: r };
@@ -28,7 +29,7 @@ export async function scoreAll(pool: pg.Pool) {
     FROM prospects p WHERE p.prospect_state IN ('discovered','qualified')`)).rows;
   for (const p of ps) {
     const { score, reasons } = fitScore({ licenseStatus: p.license_status, rating: p.google_rating == null ? null : Number(p.google_rating),
-      reviews: p.google_review_count, findings: p.nf, hasWebsite: !!p.website_url, emailVerified: p.contact_verified,
+      reviews: p.google_review_count, findings: p.nf, hasWebsite: !!p.website_url, emailVerified: p.contact_verified, catchAll: p.contact_catch_all,
       ownerName: !!p.principal_first_name, name: p.business_name });
     await pool.query(`UPDATE prospects SET fit_score = $2, fit_reasons = $3 WHERE id = $1`, [p.id, score, JSON.stringify(reasons)]);
   }

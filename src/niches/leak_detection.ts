@@ -24,6 +24,7 @@ export const leakDetection: NicheConfig = {
     priorities: [
       { code: "listing_link_broken", phrase: "a working website link on your Google listing" },
       { code: "no_tap_to_call", phrase: "a tap-to-call button on mobile" },
+      { code: "slow_mobile", phrase: "a site that loads fast on phones" },
       { code: "no_estimate_cta", phrase: "a clear way to request service" },
       { code: "mobile_overflow", phrase: "a layout that fits phone screens" },
       { code: "broken_form", phrase: "a working contact form" },
@@ -36,7 +37,7 @@ export const leakDetection: NicheConfig = {
       { code: "stale_copyright", phrase: "signs that the site is kept up to date" },
       { code: "heavy_page", phrase: "a page that loads quickly on mobile data" },
     ],
-    requiredFindings: 3,
+    requiredFindings: 2,
   },
   builder: { requiredSections: ["hero", "services", "service_area", "about", "contact"], templates: ["ridge"] },
   offer: {

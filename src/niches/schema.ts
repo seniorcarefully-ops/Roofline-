@@ -29,7 +29,7 @@ export const NicheConfig = z.object({
   audit: z.object({
     // Finding codes in priority order, with the email phrase for each.
     priorities: z.array(z.object({ code: z.string(), phrase: z.string() })).min(3),
-    requiredFindings: z.literal(3),
+    requiredFindings: z.union([z.literal(2), z.literal(3)]),
   }),
   builder: z.object({
     requiredSections: z.array(z.string()).min(1),

@@ -84,10 +84,11 @@ export async function findEmails(pool: pg.Pool, limit = 50, opts: { verify?: boo
         status = v.status; catchAll = v.catchAll;
       } else status = "unverified";
     } else s.none++;
-    const ok = (status === "valid" || status === "verified") && !catchAll;
+    // Catch-all is accepted only for an address the business publishes on its own site (not for guesses).
+    const ok = (status === "valid" || status === "verified");
     if (ok) s.verified++; else if (status === "invalid") s.invalid++; else if (chosen) s.risky++;
     if (chosen && status !== "invalid")
-      await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = $3, updated_at = now() WHERE id = $1`, [p.id, chosen, ok]);
+      await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = $3, contact_catch_all = $4, updated_at = now() WHERE id = $1`, [p.id, chosen, ok, ok && catchAll]);
     await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'email_search','email_finder',$2)`,
       [String(p.id), { candidates: ranked.slice(0, 5), chosen, status, catch_all: catchAll }]);
   }
@@ -104,10 +105,10 @@ export async function verifyPending(pool: pg.Pool, limit = 100) {
   for (const p of ps) {
     const v = await verifyEmail(p.contact_email).catch((e) => ({ status: `error: ${e.message}`, catchAll: false }));
     s.checked!++;
-    const ok = (v.status === "valid" || v.status === "verified") && !v.catchAll;
+    const ok = v.status === "valid" || v.status === "verified"; // stored emails were found on the business's own site
     if (ok) s.valid!++; else if (v.catchAll) s.catch_all!++; else if (v.status === "invalid") s.invalid!++; else s.other!++;
     if (v.status === "invalid") await pool.query(`UPDATE prospects SET contact_email = NULL, contact_verified = false WHERE id = $1`, [p.id]);
-    else await pool.query(`UPDATE prospects SET contact_verified = $2 WHERE id = $1`, [p.id, ok]);
+    else await pool.query(`UPDATE prospects SET contact_verified = $2, contact_catch_all = $3 WHERE id = $1`, [p.id, ok, ok && v.catchAll]);
     await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'email_verify','email_finder',$2)`,
       [String(p.id), { email: p.contact_email, status: v.status, catch_all: v.catchAll }]);
   }

@@ -2,9 +2,10 @@ import { readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type pg from "pg";
 import { inspectSite, launchBrowser } from "./inspect.js";
+import { mobileSpeedScore } from "./pagespeed.js";
 
 /** Bump when checks change; prospects are re-audited under the new version. */
-export const AUDIT_VERSION = 5;
+export const AUDIT_VERSION = 6;
 
 export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "data", "evidence");
 
@@ -29,6 +30,12 @@ export async function auditProspects(pool: pg.Pool, limit = 50) {
         r = { ok: false, finalUrl: null, error: `inspector error: ${e instanceof Error ? e.message.split("\n")[0] : e}`, findings: [] };
       }
       summary.audited++;
+      if (r.ok && r.finalUrl) {
+        const ps = await mobileSpeedScore(r.finalUrl);
+        if (ps && ps.score < 50 && r.screenshot)
+          r.findings.push({ code: "slow_mobile", detail: `Google's PageSpeed test scores this site's mobile performance ${ps.score}/100${ps.lcp ? ` (main content takes ${ps.lcp} to appear)` : ""}.`,
+            sourceUrl: r.finalUrl, evidencePath: r.screenshot });
+      }
       // Persist evidence images (keyed by file name) so the hosted audit page can show them.
       for (const path of new Set(r.findings.map((f) => f.evidencePath))) {
         const sz = await stat(path).then((x) => x.size).catch(() => 0);
@@ -49,7 +56,7 @@ export async function auditProspects(pool: pg.Pool, limit = 50) {
         summary.unreachable++;
         await pool.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('prospect',$1,$2)`,
           [String(p.id), `site unreachable: ${r.error}`]);
-      } else if (r.findings.length >= 3) {
+      } else if (r.findings.length >= 2) {
         summary.qualified++;
         await pool.query(`UPDATE prospects SET prospect_state='qualified', updated_at=now() WHERE id=$1`, [p.id]);
         await pool.query(`INSERT INTO events(subject_type, subject_id, track, from_state, to_state, actor)

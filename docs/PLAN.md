@@ -242,6 +242,10 @@ I build websites just for [niche plural].
 
 Deliverability note: links and attachments in a first cold email lower inbox placement. Recommended rollout is a controlled A/B test against the current locked control.
 
+### 6.3 LOCKED 2-finding version (approved November 20, 2026)
+
+Identical to the main email except the finding line: "I noticed your website is missing [X] and [Y]." Used only when exactly two verified, evidenced findings exist.
+
 ## 7. Main acquisition journey
 
 1. Select niche, geography, criteria, campaign limits, and sending identity.
@@ -503,6 +507,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 20, 2026 | Lead-volume changes approved: national area list (Washington first), Google PageSpeed mobile score as an evidenced finding (score < 50), 2-finding email version (6.3), and catch-all addresses accepted only when published on the business's own site (flagged, max 20% of each day's queue). |
 | November 19, 2026 | Per-niche offer/landing page config approved (5.7); roofing homepage set to the outcome-first 1-2-3 page. |
 | November 19, 2026 | Approved customer referral program (5.5) and lead-qualification / upstream-source plan (5.6). |
 | November 19, 2026 | Legal entity: SeniorCarefully LLC (WA, active), doing business as "Roofline Websites". WA business license + trade name to be filed about a week before the pilot (needed for SMS carrier registration and live Stripe; not needed for building or email warm-up). |

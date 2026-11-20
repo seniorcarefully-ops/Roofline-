@@ -4,7 +4,7 @@ import { NicheConfig } from "../niches/schema.js";
 export interface GateResult {
   ok: boolean;
   reasons: string[];
-  findings?: [string, string, string];
+  findings?: string[];
   template?: "website_audit" | "no_website";
 }
 
@@ -69,7 +69,8 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
     .map((r) => r.code as string)
     .filter((c) => order.has(c))
     .sort((a, b) => order.get(a)! - order.get(b)!);
-  if (f.length < 3) reasons.push(`only ${f.length} verified findings; 3 required`);
+  const need = cfg.audit.requiredFindings;
+  if (f.length < need) reasons.push(`only ${f.length} verified findings; ${need} required`);
 
   const already = await db.query(
     `SELECT 1 FROM messages WHERE idempotency_key = $1`,
@@ -79,5 +80,5 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
 
   return reasons.length
     ? { ok: false, reasons }
-    : { ok: true, reasons, template: "website_audit", findings: [phrase.get(f[0]!)!, phrase.get(f[1]!)!, phrase.get(f[2]!)!] };
+    : { ok: true, reasons, template: "website_audit", findings: f.slice(0, 3).map((c) => phrase.get(c)!) };
 }

@@ -240,3 +240,15 @@ describe("instantly events", () => {
     expect((await pool.query(`SELECT 1 FROM suppressions WHERE address='owner@acmeroof.test'`)).rowCount).toBe(1);
   });
 });
+
+import { renderMainEmailAny } from "../src/outreach/template.js";
+describe("2-finding email", () => {
+  it("only the finding line changes", () => {
+    const base = { company: "Acme Roofing", firstName: "Dana", senderName: "Cole", optInUrl: "https://rooflinewebsites.com/s/t", nichePlural: "roofers" };
+    const two = renderMainEmailAny({ ...base, findings: ["a", "b"] });
+    const three = renderMainEmailAny({ ...base, findings: ["a", "b", "c"] });
+    expect(two.body).toContain("I noticed your website is missing a and b. I put together a short audit");
+    expect(two.body.replace("missing a and b.", "")).toBe(three.body.replace("missing a, b, and c.", ""));
+    expect(() => renderMainEmailAny({ ...base, findings: ["a"] })).toThrow();
+  });
+});

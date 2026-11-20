@@ -120,3 +120,19 @@ export function renderMainEmail(v: EmailVars & { nichePlural: string }): { subje
   if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
   return out;
 }
+
+/** LOCKED 2-finding version of the main email (approved by Micah 2026-11-20): only the finding line differs. */
+export const LOCKED_B2_BODY = LOCKED_B_BODY.replace("missing [X], [Y], and [Z].", "missing [X] and [Y].");
+
+export function renderMainEmailAny(v: Omit<EmailVars, "findings"> & { findings: string[]; nichePlural: string }) {
+  if (v.findings.length >= 3) return renderMainEmail({ ...v, findings: [v.findings[0]!, v.findings[1]!, v.findings[2]!] });
+  if (v.findings.length !== 2 || v.findings.some((f) => !f.trim())) throw new Error("need 2 or 3 findings");
+  if (!/^https:\/\//.test(v.optInUrl)) throw new Error("opt-in link must be https");
+  const greeting = v.firstName?.trim() || GREETING_FALLBACK(v.company);
+  const fill = (s: string) => s.replaceAll("[Company]", v.company).replaceAll("[First Name]", greeting)
+    .replace("[X]", v.findings[0]!).replace("[Y]", v.findings[1]!)
+    .replaceAll("[Name]", v.senderName).replaceAll("[Link]", v.optInUrl).replaceAll("[Niche]", v.nichePlural);
+  const out = { subject: fill(LOCKED_B_SUBJECT), body: fill(LOCKED_B2_BODY) };
+  if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
+  return out;
+}

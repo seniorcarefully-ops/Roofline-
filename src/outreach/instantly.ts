@@ -1,7 +1,7 @@
 import type pg from "pg";
 import { NicheConfig } from "../niches/schema.js";
 import { checkInitialEmailGate } from "./gate.js";
-import { emailFooter, renderMainEmail, renderNoWebsiteEmail } from "./template.js";
+import { emailFooter, renderMainEmailAny, renderNoWebsiteEmail } from "./template.js";
 import { APP_BASE_URL } from "../build/pipeline.js";
 import { words, PERSONA } from "../server/home.js";
 
@@ -59,7 +59,9 @@ export async function queueLeads(pool: pg.Pool, opts: { minScore?: number; limit
      ORDER BY p.fit_score DESC, p.id LIMIT $2`, [minScore, limit, opts.niche ?? null])).rows;
   const out = { considered: rows.length, queued: 0, blocked: [] as { id: number; reasons: string[] }[] };
   const campaigns = new Map<string, string>();
+  const catchAllCap = Math.floor(limit * 0.2); let catchAllQueued = 0;
   for (const p of rows) {
+    if (p.contact_catch_all && catchAllQueued >= catchAllCap) { out.blocked.push({ id: p.id, reasons: ["catch-all daily cap reached"] }); continue; }
     const g = await checkInitialEmailGate(pool, p.id);
     if (!g.ok) { out.blocked.push({ id: p.id, reasons: g.reasons }); continue; }
     const cfg = NicheConfig.parse(p.config);
@@ -68,7 +70,7 @@ export async function queueLeads(pool: pg.Pool, opts: { minScore?: number; limit
     const email = g.template === "no_website"
       ? renderNoWebsiteEmail({ company: p.business_name, firstName: p.contact_first_name, reviewCount: p.google_review_count,
           rating: Number(p.google_rating), senderName: PERSONA.first, optInUrl })
-      : renderMainEmail({ company: p.business_name, firstName: p.contact_first_name, findings: g.findings!,
+      : renderMainEmailAny({ company: p.business_name, firstName: p.contact_first_name, findings: g.findings!,
           senderName: PERSONA.first, optInUrl, nichePlural: words(cfg.niche).many });
     const body = email.body + emailFooter(cfg.brand.postalAddress, unsubUrl);
     if (!campaigns.has(cfg.niche)) campaigns.set(cfg.niche, await ensureCampaign(cfg.niche));
@@ -84,6 +86,7 @@ export async function queueLeads(pool: pg.Pool, opts: { minScore?: number; limit
       [p.id, `initial_email:${p.id}`, lead.id ?? null, body, JSON.stringify({ subject: email.subject, template: g.template, campaign: campaigns.get(cfg.niche) })]);
     // State moves to sent/contacted only when Instantly reports the email actually went out.
     out.queued++;
+    if (p.contact_catch_all) catchAllQueued++;
   }
   return out;
 }
