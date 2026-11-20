@@ -68,7 +68,7 @@ export async function runDaily(pool: pg.Pool, limits: DailyLimits = DEFAULT_LIMI
       try {
         // No-website prospects never get an audit; qualify them on fit before building.
         await pool.query(`UPDATE prospects SET prospect_state = 'qualified' WHERE id = $1 AND prospect_state = 'discovered' AND outreach_template = 'no_website'`, [p.id]);
-        const r: any = await buildAndReview(pool, p.id);
+        const r: any = await buildAndReview(pool, Number(p.id));
         if (r.verdict === "approved") out.approved++; else out.edits++;
       } catch (e) {
         out.failed++;

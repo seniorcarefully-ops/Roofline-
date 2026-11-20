@@ -16,7 +16,8 @@ export const previewUrlFor = (token: string) => `${APP_BASE_URL}/p/${token}`;
 export const purchaseUrlFor = (token: string) => `${APP_BASE_URL}/p/${token}/buy`;
 
 /** Build one preview version, review it independently, and move it to ready_to_send or changes_requested. */
-export async function buildAndReview(pool: pg.Pool, prospectId: number) {
+export async function buildAndReview(pool: pg.Pool, prospectIdIn: number | string) {
+  const prospectId = Number(prospectIdIn);
   const p = (await pool.query(
     `SELECT p.*, v.config FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id WHERE p.id = $1`, [prospectId])).rows[0];
   if (!p) throw new Error("prospect not found");
