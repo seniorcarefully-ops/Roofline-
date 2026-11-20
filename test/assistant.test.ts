@@ -8,6 +8,7 @@ const ctx = (o: Partial<InboundContext> = {}): InboundContext => ({
 
 describe("reply guard", () => {
   it("allows approved prices", () => expect(guardReply("It's $150/month, cancel anytime.", ctx())).toBeTruthy());
+  it("blocks the retired $500 price", () => expect(() => guardReply("Marketing is $500/month.", ctx())).toThrow(/price/));
   it("blocks unapproved prices and discounts", () => {
     expect(() => guardReply("Only $99 this week!", ctx())).toThrow(/price/);
     expect(() => guardReply("I can give you a discount.", ctx())).toThrow(/forbidden/);

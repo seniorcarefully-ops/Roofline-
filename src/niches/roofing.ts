@@ -40,7 +40,7 @@ export const roofing: NicheConfig = {
   },
   offer: {
     headline: "Get more roofing clients.",
-    subhead: "Three simple steps that bring in more calls and more jobs. Start with step 1 today, add steps 2 and 3 whenever you're ready.",
+    subhead: "Two simple steps that bring in more calls and more jobs. Start with step 1 today, add step 2 whenever you're ready.",
     steps: [
       { id: "website", chip: "Get found and called", tag: "Managed website", title: "Turn searches into phone calls.",
         lead: "Most homeowners look you up on their phone before they call. A site built for roofers makes calling you the obvious next step.",
@@ -58,13 +58,6 @@ export const roofing: NicheConfig = {
           "<b>Sends you a ready-to-call lead</b> by text, with the whole conversation",
           "<b>A monthly report</b> of missed callers saved and jobs captured"],
         price: "$200", per: "/ month", note: "Works with your current number. Add it anytime, cancel anytime.", cta: "Start with my free preview", visual: "sms" },
-      { id: "ads", chip: "Show up first", tag: "Get More Calls · managed Google marketing", title: "Show up first when they search.",
-        lead: "When a roof leaks, homeowners search Google and call the top results. We put you there and keep you there.",
-        how: ["<b>Google Business Profile, managed</b>: services, areas, photos and updates tuned for the local map",
-          "<b>More 5-star reviews</b>: automatic review requests after every job",
-          "<b>Google ads that bring calls</b>: Local Services Ads (pay per lead) and search ads within your budget",
-          "<b>Know what's working</b>: calls, leads, cost per lead and new reviews every month"],
-        price: "$500", per: "/ month", note: "Ad spend is separate, paid to Google, and always yours to set.", cta: "Start with my free preview", visual: "search" },
     ],
   },
   sales: {

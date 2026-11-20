@@ -5,16 +5,17 @@ import { roofing } from "../src/niches/roofing.js";
 describe("per-niche offer page", () => {
   it("renders any number of steps from config", () => {
     const offer = { headline: "Keep your schedule full.", subhead: "Two steps.",
-      steps: [roofing.offer!.steps[0]!, { ...roofing.offer!.steps[2]!, id: "marketing", chip: "Get booked" }] };
+      steps: [roofing.offer!.steps[0]!, { ...roofing.offer!.steps[1]!, id: "marketing", chip: "Get booked" }] };
     const html = renderHomeV2(roofing.brand, "roofing", {}, offer);
     expect(html).toContain("<h1>Keep your schedule full.</h1>");
     expect(html).toContain('<a href="#marketing"><b>2</b>Get booked</a>');
     expect(html).not.toContain('id="texting"');
     expect(html.match(/class="step-num"/g)?.length).toBe(2);
   });
-  it("roofing config renders the approved three steps with prices", () => {
+  it("roofing config renders the approved two steps with prices", () => {
     const html = renderHomeV2(roofing.brand, "roofing", {}, roofing.offer);
-    for (const p of ["$150", "$200", "$500"]) expect(html).toContain(`<span class="amt2">${p}</span>`);
+    for (const p of ["$150", "$200"]) expect(html).toContain(`<span class="amt2">${p}</span>`);
+    expect(html).not.toContain("$500");
   });
 });
 

@@ -66,7 +66,7 @@ An independent service that can work with the customer's existing website. Throu
 
 Use approved customer-specific knowledge. Do not invent availability, prices, quotes, or appointments. Escalate uncertainty and requests requiring a person. Define usage allowance, number setup, supported phone systems, escalation rules, and messaging consent before activation.
 
-### 4.3 "Get More Calls" marketing — $500/month (revised November 19, 2026)
+### 4.3 "Get More Calls" marketing — SHELVED November 20, 2026 (not offered; kept for reference)
 
 One coordinated service focused on where homeowners look when they need a pro (Google), not on social posting:
 
@@ -507,6 +507,7 @@ External edits made in Claude do not automatically synchronize here. Bring the r
 | Date | Change |
 |---|---|
 | November 16, 2026 | Original roofing checklist created around the earlier $120 website offer. |
+| November 20, 2026 | Owner decision: offer only the managed website ($150) and AI missed-call texting ($200). The $500 marketing / managed-ads service is shelved (not offered, not sold, not mentioned by agents); may be revisited later. |
 | November 20, 2026 | Lead-volume changes approved: national area list (Washington first), Google PageSpeed mobile score as an evidenced finding (score < 50), 2-finding email version (6.3), and catch-all addresses accepted only when published on the business's own site (flagged, max 20% of each day's queue). |
 | November 19, 2026 | Per-niche offer/landing page config approved (5.7); roofing homepage set to the outcome-first 1-2-3 page. |
 | November 19, 2026 | Approved customer referral program (5.5) and lead-qualification / upstream-source plan (5.6). |

@@ -47,7 +47,7 @@ FACTS YOU MAY STATE (nothing else about price, terms or results):
 - We already built a preview website for this business from its public information. It is private and not live.
 - Website plan: $150/month. No setup fee. No long-term contract. Cancel anytime. Hosting, security, updates and edits are included.
 - They keep their own domain; connecting it is one click in most cases.
-- Optional add-ons (independent, cancel anytime): AI missed-call texting $200/month; "Get More Calls" Google marketing $500/month (ad spend separate, paid to Google).
+- Optional add-on (independent, cancel anytime): AI missed-call texting $200/month. We do not offer ads or marketing management.
 - Edits: they can request changes anytime at no extra cost.
 - You are an AI assistant for ${b.name}. If asked whether you are human or AI, say you are an AI assistant.
 NEVER: say or imply that a person, team member or Cole will call, step in, jump in or follow up personally (all help happens here, in writing); invent prices, discounts, timelines, guarantees, rankings, lead counts, reviews or availability; promise anything not listed; argue; pressure; share someone else's information.`;
@@ -86,7 +86,7 @@ const SCHEMA = {
 
 /** Phrases that must never appear in an outgoing reply (deterministic guard). */
 const FORBIDDEN = /\b(guarantee[ds]?|(?<!no )discounts?|happy to (call|jump in)|jump in|give you a call|(?<!(won.t|never|not|don.t) )call you|someone will (call|reach out)|free month|% off|percent off|rank(ed|ing)? #?1|(?<!not )(i am|i.m) (a )?(human|real person))\b/i;
-const PRICES_ALLOWED = new Set(["$150", "$200", "$500"]);
+const PRICES_ALLOWED = new Set(["$150", "$200"]);
 
 export function guardReply(reply: string | null, c: InboundContext): string | null {
   if (!reply) return null;

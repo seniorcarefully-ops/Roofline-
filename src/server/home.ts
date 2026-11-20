@@ -144,7 +144,7 @@ ${navBar(brand)}
 
 <section id="offer"><div class="wrap center">
 <span class="kicker">What we offer</span><h2>More calls. More jobs. Less hassle.</h2>
-<p class="lead">Three services, each built to bring you more customers. Start with one, add the others anytime. Every plan is month-to-month.</p>
+<p class="lead">Two services, each built to bring you more customers. Start with one, add the others anytime. Every plan is month-to-month.</p>
 <div class="plans" style="text-align:left">
 
 <article class="plan featured">
@@ -176,20 +176,7 @@ ${navBar(brand)}
 <a class="btn ghost" href="#get">Start with a free preview</a>
 </article>
 
-<article class="plan">
-<span class="ptag">Get More Calls · marketing</span>
-<h3>Show up first when they search.</h3>
-<div class="amt">$500<small>&nbsp;/ month</small></div>
-<p class="why">When a roof leaks, homeowners grab their phone and search Google. The ${esc(w.many)} at the top of the map and the ads get the calls. We put you there and keep you there.</p>
-<ul>
-<li><span><b>Google Business Profile, managed</b>: services, areas, photos and updates tuned for the local map</span></li>
-<li><span><b>More 5-star reviews</b>: automatic review requests to your customers after each job</span></li>
-<li><span><b>Google ads that bring calls</b>: Local Services Ads (pay per lead) and search ads, within the budget you set</span></li>
-<li><span><b>Know what's working</b>: calls, leads, cost per lead and new reviews every month</span></li>
-<li><span>Ad spend is separate and always yours to control</span></li>
-</ul>
-<a class="btn ghost" href="#get">Start with a free preview</a>
-</article>
+
 </div>
 <p class="fine">Every service is independent: buy one, cancel anytime, no bundles required. Results vary by market; we report real numbers, never guesses.</p>
 </div></section>
@@ -247,7 +234,7 @@ export function renderDoc(brand: Brand, kind: "privacy" | "terms"): string {
 <h2>Security</h2><p>We use encryption in transit (HTTPS) and limit access to personal information.</p>
 <h2>Contact</h2><p>Reply to any message from ${n}, or text ${BRAND_PHONE.display}.</p>` : `
 <h1>Terms &amp; SMS Terms</h1><p>Last updated November 19, 2026.</p>
-<h2>Services</h2><p>${n} offers independent monthly subscriptions: a managed website ($150/month), AI missed-call texting ($200/month), and automated marketing ($500/month; advertising spend billed separately). No setup fee. Cancel anytime; service continues through the end of the paid period.</p>
+<h2>Services</h2><p>${n} offers independent monthly subscriptions: a managed website ($150/month) and AI missed-call texting ($200/month). No setup fee. Cancel anytime; service continues through the end of the paid period.</p>
 <h2>SMS program</h2><ul>
 <li><b>Program:</b> ${n} website preview and customer messages.</li>
 <li><b>What you'll receive:</b> your website preview link, answers to your questions, follow-ups about your preview, and service and account messages if you become a customer.</li>
