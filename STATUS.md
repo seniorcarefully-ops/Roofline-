@@ -43,6 +43,12 @@ Billing (Stripe sandbox, verified with real API calls via `npm run test:stripe`)
 - Reviewer now scrolls the page and waits for every image before judging.
 - Open: map embed shows blank in this sandbox; verify once publicly hosted.
 
+## Daily automation (live)
+- Render cron job roofline-daily (crn-dbvrq8mi0phs73aval20, Docker, Standard plan, 13:13 UTC daily): discover 6 new areas (240-area list: Washington first, then national), licenses, audit (v6 adds Google PageSpeed mobile score < 50 as a finding; 2 findings now qualify with the approved 2-finding email), find/guess/verify emails (published catch-all accepted, max 20% of queue), score, build+review previews, queue to the paused Instantly campaign. Live niche only.
+- Cron and web service do not auto-deploy on push: redeploy both via the Render API after code changes.
+- PageSpeed currently returns no score (shared quota exhausted): the server's Google key needs the PageSpeed Insights API enabled.
+- First runs (Nov 19-20): Seattle-area run added 137+ roofers; 39 verified emails + 13 published catch-all; 3 prospects fully send-ready (blocked only by outreach paused).
+
 ## Multi-niche test: leak detection (draft, 2026-11-19)
 - Niche config src/niches/leak_detection.ts (placeholder brand "Leak Detection Websites", no domain, approved prices), own wording (src/niches/words.ts) and photo library (27 Unsplash photos). Test site at /n/leak-detection (noindex). Roofing site unaffected; host-based routing ready for per-niche domains.
 - Live run on Render: Spokane discovery 45 found / 36 stored; licenses 19 active, 5 inactive, 12 unmatched; audit 31 checked, 5 qualified. First preview built + approved: Tactical Plumbing & Piping (leak-detection wording, photos, opt-in page with 3 findings). No emails or campaign for this niche.
