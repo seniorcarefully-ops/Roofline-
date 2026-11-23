@@ -97,6 +97,7 @@ try {
   }
   else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
   else if (cmd === "import-supersearch") console.log(await (await import("./research/supersearch.js")).importSupersearch(pool, args[0]!));
+  else if (cmd === "supersearch-report") console.log(JSON.stringify(await (await import("./research/supersearch.js")).supersearchReport(pool)));
   else if (cmd === "stuck") {
     const r = await pool.query(`SELECT id, business_name, website_state, place_id IS NOT NULL AS has_place FROM prospects WHERE website_state IN ('build_queued','building','reviewing')`);
     const out = [];

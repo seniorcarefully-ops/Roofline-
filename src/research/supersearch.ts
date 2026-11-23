@@ -45,3 +45,10 @@ export async function importSupersearch(pool: pg.Pool, listId: string) {
   }
   return s;
 }
+
+/** Funnel report for prospects imported from SuperSearch. */
+export async function supersearchReport(pool: pg.Pool) {
+  return (await pool.query(`SELECT prospect_state, website_state, count(*)::int n, count(*) FILTER (WHERE fit_score >= 60)::int fit60,
+     count(*) FILTER (WHERE EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id=x.id::text AND e.track='audit'))::int audited
+   FROM prospects x WHERE id::text IN (SELECT subject_id FROM events WHERE actor='supersearch') GROUP BY 1,2 ORDER BY 1,2`)).rows;
+}
