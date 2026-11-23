@@ -30,7 +30,7 @@ export async function scoreAll(pool: pg.Pool) {
   for (const p of ps) {
     const { score, reasons } = fitScore({ licenseStatus: p.license_status, rating: p.google_rating == null ? null : Number(p.google_rating),
       reviews: p.google_review_count, findings: p.nf, hasWebsite: !!p.website_url, emailVerified: p.contact_verified, catchAll: p.contact_catch_all,
-      ownerName: !!p.principal_first_name, name: p.business_name });
+      ownerName: !!(p.principal_first_name || p.contact_first_name), name: p.business_name });
     await pool.query(`UPDATE prospects SET fit_score = $2, fit_reasons = $3 WHERE id = $1`, [p.id, score, JSON.stringify(reasons)]);
   }
   const dist = (await pool.query(`SELECT width_bucket(fit_score, 0, 101, 5) b, count(*) FROM prospects WHERE fit_score IS NOT NULL GROUP BY 1 ORDER BY 1`)).rows;

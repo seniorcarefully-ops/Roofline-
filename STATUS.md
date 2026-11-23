@@ -97,3 +97,6 @@ Not yet: owner dashboard/auth, hosting, deployment, public webhook endpoint, liv
 | Anthropic (production key) | Needed once hosting is chosen |
 
 No integration has been live-tested. Nothing has been sent or charged.
+
+## SuperSearch test (2026-11-23)
+100 roofing owners imported from Instantly SuperSearch (100 credits; filter title "Owner", company name contains "roofing"; 12,369 match nationally). All 100 came back with verified owner emails. 71 matched a Google listing on the same domain and passed fit rules (24 no matching listing, 4 duplicates, 1 wrong type). Audit: 22 of 71 qualified (2+ evidenced findings), 49 below threshold. Yield: 22 send-ready-to-build leads per 100 credits. Command: `import-supersearch <listId>`, `supersearch-report`. Owner first name from SuperSearch now counts in the fit score.
