@@ -100,3 +100,6 @@ No integration has been live-tested. Nothing has been sent or charged.
 
 ## SuperSearch test (2026-11-23)
 100 roofing owners imported from Instantly SuperSearch (100 credits; filter title "Owner", company name contains "roofing"; 12,369 match nationally). All 100 came back with verified owner emails. 71 matched a Google listing on the same domain and passed fit rules (24 no matching listing, 4 duplicates, 1 wrong type). Audit: 22 of 71 qualified (2+ evidenced findings), 49 below threshold. Yield: 22 send-ready-to-build leads per 100 credits. Command: `import-supersearch <listId>`, `supersearch-report`. Owner first name from SuperSearch now counts in the fit score.
+
+## Email version A (2026-11-25)
+Test send landed in Gmail Promotions. Owner approved version A ("I like version A"): subject "There's an issue with your website", short plain body, NO links, one verified detail line (Google reviews hook only when the audit proved reviews are missing), opt-out by replying "no" (handled deterministically), postal address footer, List-Unsubscribe header off. Links (preview + audit) are sent by the assistant only after a positive reply. Replaces variant B for website prospects; the no-website email still has links and needs a version A rewrite (pending approval). Inbox placement re-test pending.

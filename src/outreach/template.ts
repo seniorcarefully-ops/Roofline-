@@ -136,3 +136,53 @@ export function renderMainEmailAny(v: Omit<EmailVars, "findings"> & { findings: 
   if (/\[[A-Z][^\]]*\]/.test(out.subject + out.body)) throw new Error("unfilled placeholder");
   return out;
 }
+
+/**
+ * LOCKED main email, version A (approved by Micah 2026-11-25: "I like version A").
+ * Plain, short, NO links (links go out only after a reply, for inbox placement).
+ * Opt-out is by reply. The detail line uses only verified data: Google review
+ * count/rating from the listing and audit findings from screenshots.
+ */
+export const LOCKED_A_SUBJECT = "There's an issue with your website";
+export const LOCKED_A_BODY = `Hi [Greeting],
+
+Pulled up your site on my phone. [Detail]
+
+I went ahead and built you a new version that fixes that. Want me to send it over?
+
+[Name]`;
+
+export interface EmailAVars {
+  firstName: string | null;
+  senderName: string;
+  findings: string[];            // niche phrases, priority order (2+)
+  codes: string[];               // matching finding codes
+  reviewCount: number | null;    // verified Google listing data
+  rating: number | null;
+}
+
+/** The one personal line. Reviews hook only when the audit proved reviews aren't on the site. */
+export function detailLine(v: Pick<EmailAVars, "findings" | "codes" | "reviewCount" | "rating">): string {
+  if (v.findings.length < 2 || v.findings.length !== v.codes.length || v.findings.some((f) => !f.trim())) throw new Error("need 2+ findings with codes");
+  const ri = v.codes.indexOf("no_reviews_shown");
+  if (ri >= 0 && (v.reviewCount ?? 0) >= 10 && (v.rating ?? 0) >= 4.5) {
+    const other = v.findings.find((_, i) => i !== ri)!;
+    return `You've got ${v.reviewCount} great Google reviews, but none of them show up on the site, and it's missing ${other}.`;
+  }
+  return `It's missing ${v.findings[0]} and ${v.findings[1]}.`;
+}
+
+export function renderEmailA(v: EmailAVars): { subject: string; body: string } {
+  if (!v.senderName.trim()) throw new Error("missing sender");
+  const first = v.firstName?.trim();
+  const greeting = first && /^[A-Za-z][A-Za-z'-]{1,20}$/.test(first) ? first[0]!.toUpperCase() + first.slice(1).toLowerCase() : "there";
+  const body = LOCKED_A_BODY.replace("[Greeting]", greeting).replace("[Detail]", detailLine(v)).replace("[Name]", v.senderName);
+  if (/\[[A-Z][^\]]*\]/.test(body) || /https?:\/\//.test(body)) throw new Error("unfilled placeholder or link in version A");
+  return { subject: LOCKED_A_SUBJECT, body };
+}
+
+/** Footer for version A: identity, postal address, reply-based opt-out. No links. */
+export function emailFooterA(postalAddress: string | null): string {
+  if (!postalAddress?.trim()) throw new Error("postal address missing: cannot send commercial email");
+  return `\n\n${postalAddress}\nReply "no" and I won't email again.`;
+}

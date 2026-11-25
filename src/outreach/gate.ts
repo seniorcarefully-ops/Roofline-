@@ -5,6 +5,7 @@ export interface GateResult {
   ok: boolean;
   reasons: string[];
   findings?: string[];
+  codes?: string[];
   template?: "website_audit" | "no_website";
 }
 
@@ -78,6 +79,6 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
   );
   if (already.rowCount) reasons.push("initial email already sent");
 
-  const findings = f.slice(0, 3).map((c) => phrase.get(c)!);
-  return reasons.length ? { ok: false, reasons, findings } : { ok: true, reasons, template: "website_audit", findings };
+  const findings = f.slice(0, 3).map((c) => phrase.get(c)!), codes = f.slice(0, 3);
+  return reasons.length ? { ok: false, reasons, findings, codes } : { ok: true, reasons, template: "website_audit", findings, codes };
 }

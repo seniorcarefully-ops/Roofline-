@@ -1,7 +1,7 @@
 import type pg from "pg";
 import { NicheConfig } from "../niches/schema.js";
 import { checkInitialEmailGate } from "./gate.js";
-import { emailFooter, renderMainEmailAny, renderNoWebsiteEmail } from "./template.js";
+import { emailFooter, emailFooterA, renderEmailA, renderNoWebsiteEmail } from "./template.js";
 import { APP_BASE_URL } from "../build/pipeline.js";
 import { words, PERSONA } from "../server/home.js";
 
@@ -38,7 +38,7 @@ export async function ensureCampaign(niche: string): Promise<string> {
     daily_limit: 40,
     stop_on_reply: true, stop_on_auto_reply: true,
     link_tracking: false, open_tracking: false, text_only: true, first_email_text_only: true,
-    insert_unsubscribe_header: true,
+    insert_unsubscribe_header: false, // plain person-to-person email; opt-out is by reply
     allow_risky_contacts: false,
   });
   return c.id;
@@ -70,9 +70,9 @@ export async function queueLeads(pool: pg.Pool, opts: { minScore?: number; limit
     const email = g.template === "no_website"
       ? renderNoWebsiteEmail({ company: p.business_name, firstName: p.contact_first_name, reviewCount: p.google_review_count,
           rating: Number(p.google_rating), senderName: PERSONA.first, optInUrl })
-      : renderMainEmailAny({ company: p.business_name, firstName: p.contact_first_name, findings: g.findings!,
-          senderName: PERSONA.first, optInUrl, nichePlural: words(cfg.niche).many });
-    const body = email.body + emailFooter(cfg.brand.postalAddress, unsubUrl);
+      : renderEmailA({ firstName: p.contact_first_name, senderName: PERSONA.first, findings: g.findings!, codes: g.codes!,
+          reviewCount: p.google_review_count, rating: p.google_rating == null ? null : Number(p.google_rating) });
+    const body = email.body + (g.template === "no_website" ? emailFooter(cfg.brand.postalAddress, unsubUrl) : emailFooterA(cfg.brand.postalAddress));
     if (!campaigns.has(cfg.niche)) campaigns.set(cfg.niche, await ensureCampaign(cfg.niche));
     const lead = await api("POST", "/api/v2/leads", {
       campaign: campaigns.get(cfg.niche), email: p.contact_email, first_name: p.contact_first_name ?? undefined,
@@ -117,9 +117,9 @@ export async function testSend(pool: pg.Pool, prospectId: number, testEmail: str
   const cfg = NicheConfig.parse(p.config);
   const optInUrl = `${APP_BASE_URL}/s/${p.token}`, unsubUrl = `${APP_BASE_URL}/u/${p.unsub_token}`;
   const g2 = await checkInitialEmailGate(pool, prospectId);
-  const email = renderMainEmailAny({ company: p.business_name, firstName: p.contact_first_name, findings: g2.findings ?? g.findings!,
-    senderName: PERSONA.first, optInUrl, nichePlural: words(cfg.niche).many });
-  const body = email.body + emailFooter(cfg.brand.postalAddress, unsubUrl);
+  const email = renderEmailA({ firstName: p.contact_first_name, senderName: PERSONA.first, findings: g2.findings ?? g.findings!, codes: g2.codes ?? g.codes!,
+    reviewCount: p.google_review_count, rating: p.google_rating == null ? null : Number(p.google_rating) });
+  const body = email.body + emailFooterA(cfg.brand.postalAddress);
   const name = "Roofline Websites · TEST (owner e2e)";
   const found = await api("GET", `/api/v2/campaigns?search=${encodeURIComponent(name)}&limit=10`);
   let id = (found.items ?? []).find((c: any) => c.name === name)?.id;
@@ -128,7 +128,7 @@ export async function testSend(pool: pg.Pool, prospectId: number, testEmail: str
       days: { "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true }, timezone: "America/Boise" }] },
     sequences: [{ steps: [{ type: "email", delay: 0, variants: [{ subject: "{{subject}}", body: "{{body}}" }] }] }],
     email_list: [SENDERS[0]], daily_limit: 5, stop_on_reply: true, link_tracking: false, open_tracking: false, text_only: true,
-    first_email_text_only: true, insert_unsubscribe_header: true,
+    first_email_text_only: true, insert_unsubscribe_header: false,
   })).id;
   const lead = await api("POST", "/api/v2/leads", { campaign: id, email: testEmail, first_name: p.contact_first_name ?? undefined,
     company_name: p.business_name, custom_variables: { subject: email.subject, body, prospect_id: String(p.id) } });

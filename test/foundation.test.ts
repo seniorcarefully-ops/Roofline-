@@ -263,3 +263,23 @@ describe("site identity", () => {
     expect(pageMatchesBusiness("Best Roofing Company - quality roof repair", e)).toBe(false);
   });
 });
+
+import { renderEmailA, emailFooterA } from "../src/outreach/template.js";
+describe("email version A", () => {
+  const base = { firstName: "ben", senderName: "Cole", reviewCount: 87, rating: 4.9 };
+  it("uses the reviews hook only when the audit proved reviews are missing", () => {
+    const e = renderEmailA({ ...base, findings: ["customer reviews on the site", "a tap-to-call button"], codes: ["no_reviews_shown", "no_tap_to_call"] });
+    expect(e.subject).toBe("There's an issue with your website");
+    expect(e.body).toContain("Hi Ben,");
+    expect(e.body).toContain("You've got 87 great Google reviews, but none of them show up on the site, and it's missing a tap-to-call button.");
+    const g = renderEmailA({ ...base, firstName: null, findings: ["a tap-to-call button", "a way to request an estimate"], codes: ["no_tap_to_call", "no_estimate_cta"] });
+    expect(g.body).toContain("Hi there,");
+    expect(g.body).toContain("It's missing a tap-to-call button and a way to request an estimate.");
+  });
+  it("never contains links and needs 2 findings", () => {
+    const e = renderEmailA({ ...base, findings: ["a", "b"], codes: ["x", "y"] });
+    expect(e.body + emailFooterA("Roofline Websites, PO Box 2106, Woodinville, WA 98072")).not.toMatch(/https?:/);
+    expect(() => renderEmailA({ ...base, findings: ["a"], codes: ["x"] })).toThrow();
+    expect(() => emailFooterA(null)).toThrow(/postal/);
+  });
+});
