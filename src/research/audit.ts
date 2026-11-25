@@ -5,7 +5,7 @@ import { inspectSite, launchBrowser } from "./inspect.js";
 import { mobileSpeedScore } from "./pagespeed.js";
 
 /** Bump when checks change; prospects are re-audited under the new version. */
-export const AUDIT_VERSION = 6;
+export const AUDIT_VERSION = 7; // v7: page must show this business (blocks parked/placeholder pages)
 
 export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "data", "evidence");
 
@@ -14,22 +14,24 @@ export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "dat
  * screenshot-backed checks are marked verified. Prospects with 3+ verified
  * findings move to qualified; unreachable sites go to the exception queue.
  */
-export async function auditProspects(pool: pg.Pool, limit = 50) {
+export async function auditProspects(pool: pg.Pool, limit = 50, states: string[] = ["discovered"]) {
   const ps = (await pool.query(
-    `SELECT id, website_url FROM prospects WHERE prospect_state = 'discovered' AND website_url IS NOT NULL
+    `SELECT id, website_url, business_name, phone, normalized_domain, prospect_state FROM prospects WHERE prospect_state = ANY($3) AND website_url IS NOT NULL
        AND NOT EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id = prospects.id::text AND e.track='audit' AND (e.detail->>'version')::int = $2)
-     ORDER BY id LIMIT $1`, [limit, AUDIT_VERSION])).rows;
+     ORDER BY id LIMIT $1`, [limit, AUDIT_VERSION, states])).rows;
   const browser = await launchBrowser();
-  const summary = { audited: 0, qualified: 0, unreachable: 0, belowThreshold: 0 };
+  const summary = { audited: 0, qualified: 0, unreachable: 0, belowThreshold: 0, demoted: 0 };
   try {
     for (const p of ps) {
       let r;
       try {
-        r = await inspectSite(p.website_url, join(EVIDENCE_DIR, String(p.id)), browser);
+        r = await inspectSite(p.website_url, join(EVIDENCE_DIR, String(p.id)), browser, { name: p.business_name, phone: p.phone, domain: p.normalized_domain });
       } catch (e) {
         r = { ok: false, finalUrl: null, error: `inspector error: ${e instanceof Error ? e.message.split("\n")[0] : e}`, findings: [] };
       }
       summary.audited++;
+      // A re-audit replaces earlier findings; nothing old survives a new result.
+      await pool.query(`DELETE FROM audit_findings WHERE prospect_id = $1`, [p.id]);
       if (r.ok && r.finalUrl) {
         const ps = await mobileSpeedScore(r.finalUrl);
         if (ps && ps.score < 50 && r.screenshot)
@@ -52,16 +54,25 @@ export async function auditProspects(pool: pg.Pool, limit = 50) {
       await pool.query(
         `INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'audit','auditor',$2)`,
         [String(p.id), { version: AUDIT_VERSION, ok: r.ok, error: r.error ?? null, finalUrl: r.finalUrl, findings: r.findings.map((f) => f.code) }]);
+      const demote = async () => {
+        if (p.prospect_state !== "qualified") return;
+        await pool.query(`UPDATE prospects SET prospect_state='discovered', updated_at=now() WHERE id=$1`, [p.id]);
+        await pool.query(`INSERT INTO events(subject_type, subject_id, track, from_state, to_state, actor, detail)
+          VALUES ('prospect',$1,'prospect_state','qualified','discovered','auditor',$2)`, [String(p.id), { reason: r.error ?? "below threshold on re-audit" }]);
+        summary.demoted++;
+      };
       if (!r.ok) {
+        await demote();
         summary.unreachable++;
         await pool.query(`INSERT INTO exceptions(subject_type, subject_id, reason) VALUES ('prospect',$1,$2)`,
           [String(p.id), `site unreachable: ${r.error}`]);
       } else if (r.findings.length >= 2) {
         summary.qualified++;
+        if (p.prospect_state === "qualified") continue;
         await pool.query(`UPDATE prospects SET prospect_state='qualified', updated_at=now() WHERE id=$1`, [p.id]);
         await pool.query(`INSERT INTO events(subject_type, subject_id, track, from_state, to_state, actor)
           VALUES ('prospect',$1,'prospect_state','discovered','qualified','auditor')`, [String(p.id)]);
-      } else summary.belowThreshold++;
+      } else { await demote(); summary.belowThreshold++; }
     }
   } finally { await browser.close(); }
   return summary;

@@ -252,3 +252,14 @@ describe("2-finding email", () => {
     expect(() => renderMainEmailAny({ ...base, findings: ["a"] })).toThrow();
   });
 });
+
+import { pageMatchesBusiness } from "../src/research/inspect.js";
+describe("site identity", () => {
+  it("rejects a placeholder page and accepts the real business", () => {
+    const e = { name: "Edmonds Roof Repair", phone: "(425) 555-0199", domain: "edmondsroofrepair.com" };
+    expect(pageMatchesBusiness("Public Email Service\nWelcome to our public email service!", e)).toBe(false);
+    expect(pageMatchesBusiness("Roofing in Edmonds, WA. Call today", e)).toBe(true);
+    expect(pageMatchesBusiness("Call 425-555-0199 for a free roof estimate", e)).toBe(true);
+    expect(pageMatchesBusiness("Best Roofing Company - quality roof repair", e)).toBe(false);
+  });
+});

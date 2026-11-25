@@ -13,7 +13,7 @@ try {
   await migrate(pool);
   if (!(await activeNiche(pool))) await activateNicheVersion(pool, await publishNicheVersion(pool, roofing), "cli");
   if (cmd === "discover") console.log(await discover(pool, args.join(" ")));
-  else if (cmd === "audit") console.log(await auditProspects(pool, Number(args[0] ?? 50)));
+  else if (cmd === "audit") console.log(await auditProspects(pool, Number(args[0] ?? 50), args[1] ? args[1].split(",") : undefined));
   else if (cmd === "build") console.log(JSON.stringify(await buildAndReview(pool, Number(args[0])), null, 1));
   else if (cmd === "licenses") console.log(await enrichLicenses(pool));
   else if (cmd === "build-name") {
@@ -98,6 +98,11 @@ try {
   else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
   else if (cmd === "import-supersearch") console.log(await (await import("./research/supersearch.js")).importSupersearch(pool, args[0]!));
   else if (cmd === "supersearch-report") console.log(JSON.stringify(await (await import("./research/supersearch.js")).supersearchReport(pool)));
+  else if (cmd === "test-send" || cmd === "test-restore") {
+    const r = await pool.query(`SELECT p.id FROM prospects p JOIN previews pv ON pv.prospect_id = p.id WHERE pv.token = $1`, [args[0]]);
+    const m = await import("./outreach/instantly.js");
+    console.log(JSON.stringify(cmd === "test-send" ? await m.testSend(pool, Number(r.rows[0].id), args[1]!) : await m.testRestore(pool, Number(r.rows[0].id))));
+  }
   else if (cmd === "stuck") {
     const r = await pool.query(`SELECT id, business_name, website_state, place_id IS NOT NULL AS has_place FROM prospects WHERE website_state IN ('build_queued','building','reviewing')`);
     const out = [];

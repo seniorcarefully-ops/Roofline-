@@ -98,3 +98,52 @@ export async function removeLeadEverywhere(email: string) {
 }
 
 export const campaignStatus = (id: string) => api("GET", `/api/v2/campaigns/${id}`);
+
+/**
+ * Owner-approved end-to-end test: send the real initial email for one prospect to the
+ * OWNER's address, through a separate TEST campaign. The prospect's real address is
+ * saved in an event and swapped back by `test-restore`; the real business is never emailed.
+ * All gate checks still apply except the global outreach pause (owner approved this one send).
+ */
+export async function testSend(pool: pg.Pool, prospectId: number, testEmail: string) {
+  const g = await checkInitialEmailGate(pool, prospectId);
+  const other = g.reasons.filter((r) => r !== "outreach is paused" && r !== "no verified contact email");
+  if (other.length) throw new Error(`gate blocked: ${other.join("; ")}`);
+  const p = (await pool.query(`SELECT p.*, v.config, (SELECT token FROM previews WHERE prospect_id = p.id ORDER BY version DESC LIMIT 1) AS token
+    FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id WHERE p.id = $1`, [prospectId])).rows[0];
+  await pool.query(`INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'e2e_test','owner_test',$2)`,
+    [String(p.id), { original_email: p.contact_email, original_verified: p.contact_verified, test_email: testEmail }]);
+  await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = true WHERE id = $1`, [p.id, testEmail.toLowerCase()]);
+  const cfg = NicheConfig.parse(p.config);
+  const optInUrl = `${APP_BASE_URL}/s/${p.token}`, unsubUrl = `${APP_BASE_URL}/u/${p.unsub_token}`;
+  const g2 = await checkInitialEmailGate(pool, prospectId);
+  const email = renderMainEmailAny({ company: p.business_name, firstName: p.contact_first_name, findings: g2.findings ?? g.findings!,
+    senderName: PERSONA.first, optInUrl, nichePlural: words(cfg.niche).many });
+  const body = email.body + emailFooter(cfg.brand.postalAddress, unsubUrl);
+  const name = "Roofline Websites · TEST (owner e2e)";
+  const found = await api("GET", `/api/v2/campaigns?search=${encodeURIComponent(name)}&limit=10`);
+  let id = (found.items ?? []).find((c: any) => c.name === name)?.id;
+  if (!id) id = (await api("POST", "/api/v2/campaigns", {
+    name, campaign_schedule: { schedules: [{ name: "Any time", timing: { from: "00:00", to: "23:59" },
+      days: { "0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true }, timezone: "America/Boise" }] },
+    sequences: [{ steps: [{ type: "email", delay: 0, variants: [{ subject: "{{subject}}", body: "{{body}}" }] }] }],
+    email_list: [SENDERS[0]], daily_limit: 5, stop_on_reply: true, link_tracking: false, open_tracking: false, text_only: true,
+    first_email_text_only: true, insert_unsubscribe_header: true,
+  })).id;
+  const lead = await api("POST", "/api/v2/leads", { campaign: id, email: testEmail, first_name: p.contact_first_name ?? undefined,
+    company_name: p.business_name, custom_variables: { subject: email.subject, body, prospect_id: String(p.id) } });
+  await pool.query(`INSERT INTO messages(prospect_id, channel, direction, idempotency_key, provider_id, status, body, meta)
+    VALUES ($1,'email','outbound',$2,$3,'queued',$4,$5) ON CONFLICT (idempotency_key) DO NOTHING`,
+    [p.id, `initial_email:${p.id}`, lead.id ?? null, body, JSON.stringify({ subject: email.subject, template: "website_audit", campaign: id, test: true })]);
+  await api("POST", `/api/v2/campaigns/${id}/activate`, {});
+  return { campaign: id, subject: email.subject, to: testEmail, business: p.business_name };
+}
+
+/** Undo testSend: restore the prospect's real address and clear test send records. */
+export async function testRestore(pool: pg.Pool, prospectId: number) {
+  const e = (await pool.query(`SELECT detail FROM events WHERE subject_type='prospect' AND subject_id=$1 AND track='e2e_test' ORDER BY id DESC LIMIT 1`, [String(prospectId)])).rows[0];
+  if (!e) throw new Error("no test record");
+  await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = $3 WHERE id = $1`, [prospectId, e.detail.original_email, e.detail.original_verified]);
+  await pool.query(`DELETE FROM messages WHERE prospect_id = $1 AND meta->>'test' = 'true'`, [prospectId]);
+  return { restored: e.detail.original_email };
+}

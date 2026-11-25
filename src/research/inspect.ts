@@ -26,7 +26,23 @@ export async function confirmedNoDns(hostname: string): Promise<boolean> {
 const ESTIMATE = /(free\s+)?(estimate|quote|inspection|bid)/i;
 
 interface PageMetrics { telCount: number; ctaCount: number; overflow: number; viewportMeta: boolean; links: string[];
-  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number }
+  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string }
+
+export interface Expect { name: string; phone: string | null; domain: string | null }
+
+const GENERIC = new Set(["roof","roofs","roofing","roofers","roofer","repair","repairs","llc","inc","co","company","the","and","of","services","service","construction","contractors","contractor","exteriors","exterior","home","homes","pros","pro","group","solutions","gutters","gutter","siding","windows","corp","&"]);
+
+/** True only if the loaded page plausibly belongs to this business (name word, phone, or domain text). */
+export function pageMatchesBusiness(text: string, e: Expect): boolean {
+  const t = text.toLowerCase();
+  const digits = t.replace(/\D/g, "");
+  const ph = (e.phone ?? "").replace(/\D/g, "").slice(-10);
+  if (ph.length === 10 && (digits.includes(ph) || digits.includes(ph.slice(3)))) return true;
+  const words = e.name.toLowerCase().split(/[^a-z0-9']+/).filter((w) => w.length >= 3 && !GENERIC.has(w));
+  if (words.length && words.some((w) => new RegExp(`\\b${w}\\b`).test(t))) return true;
+  if (!words.length && t.includes(e.name.toLowerCase())) return true;
+  return false;
+}
 
 // Runs inside the page. Plain JS string so bundlers cannot inject helpers.
 const PAGE_METRICS = `function (estimateSrc) {
@@ -61,14 +77,15 @@ const PAGE_METRICS = `function (estimateSrc) {
     copyrightYear: years.length ? Math.max.apply(null, years) : null, reviewsShown: reviewsShown,
     smallTextRatio: total ? small / total : 0, textNodes: total,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
-    viewportMeta: !!document.querySelector('meta[name="viewport"]'), links: links };
+    viewportMeta: !!document.querySelector('meta[name="viewport"]'), links: links,
+    pageText: (document.title + "\\n" + text).slice(0, 50000) };
 }`;
 
 /**
  * Load a site as an iPhone and run deterministic checks. Read-only: never
  * submits forms or clicks anything that could contact the business.
  */
-async function inspectOne(url: string, outDir: string, browser?: Browser): Promise<Inspection> {
+async function inspectOne(url: string, outDir: string, browser?: Browser, expect?: Expect): Promise<Inspection> {
   const own = !browser;
   const b = browser ?? (await launchBrowser());
   await mkdir(outDir, { recursive: true });
@@ -99,6 +116,9 @@ async function inspectOne(url: string, outDir: string, browser?: Browser): Promi
       add("no_https", `Site loads over plain HTTP (${finalUrl}); browsers mark it "Not secure".`);
 
     const m: PageMetrics = await page.evaluate(`(${PAGE_METRICS})(${JSON.stringify(ESTIMATE.source)})`);
+    // Never audit a page that isn't this business (parked domain, placeholder, other company).
+    if (expect && !pageMatchesBusiness(m.pageText, expect))
+      return { ok: false, finalUrl, error: "site_mismatch: page does not show this business's name or phone", findings: [] };
 
     if (m.telCount === 0) add("no_tap_to_call", "No tap-to-call (tel:) link found on the mobile homepage.");
     if (m.ctaCount === 0) add("no_estimate_cta", "No visible button or link to request an estimate, quote, or inspection.", full);
@@ -141,11 +161,12 @@ function altUrl(url: string): string {
 }
 
 /** Inspect a listed site; if the listed URL fails, try the www/bare variant and record that. */
-export async function inspectSite(url: string, outDir: string, browser?: Browser): Promise<Inspection> {
-  const first = await inspectOne(url, outDir, browser);
+export async function inspectSite(url: string, outDir: string, browser?: Browser, expect?: Expect): Promise<Inspection> {
+  const first = await inspectOne(url, outDir, browser, expect);
+  if (first.error?.startsWith("site_mismatch")) return first;
   if (first.ok || first.finalUrl) return first;
   const alt = altUrl(url);
-  const second = await inspectOne(alt, outDir, browser);
+  const second = await inspectOne(alt, outDir, browser, expect);
   if (!second.ok) return first;
   // Only claim the listing link is broken if public DNS confirms it, or the site itself errors.
   const dnsFail = /ERR_NAME_NOT_RESOLVED/.test(first.error ?? "");
