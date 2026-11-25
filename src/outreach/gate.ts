@@ -78,7 +78,6 @@ export async function checkInitialEmailGate(db: Db, prospectId: number): Promise
   );
   if (already.rowCount) reasons.push("initial email already sent");
 
-  return reasons.length
-    ? { ok: false, reasons }
-    : { ok: true, reasons, template: "website_audit", findings: f.slice(0, 3).map((c) => phrase.get(c)!) };
+  const findings = f.slice(0, 3).map((c) => phrase.get(c)!);
+  return reasons.length ? { ok: false, reasons, findings } : { ok: true, reasons, template: "website_audit", findings };
 }
