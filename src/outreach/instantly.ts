@@ -143,7 +143,11 @@ export async function testSend(pool: pg.Pool, prospectId: number, testEmail: str
 export async function testRestore(pool: pg.Pool, prospectId: number) {
   const e = (await pool.query(`SELECT detail FROM events WHERE subject_type='prospect' AND subject_id=$1 AND track='e2e_test' ORDER BY id DESC LIMIT 1`, [String(prospectId)])).rows[0];
   if (!e) throw new Error("no test record");
-  await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = $3 WHERE id = $1`, [prospectId, e.detail.original_email, e.detail.original_verified]);
+  // testSend only runs on a qualified, ready_to_send prospect, so those are the states to return to.
+  await pool.query(`UPDATE prospects SET contact_email = $2, contact_verified = $3, prospect_state = 'qualified', website_state = 'ready_to_send', updated_at = now() WHERE id = $1`,
+    [prospectId, e.detail.original_email, e.detail.original_verified]);
+  await pool.query(`INSERT INTO events(subject_type, subject_id, track, to_state, actor, detail) VALUES ('prospect',$1,'prospect_state','qualified','owner_test',$2)`,
+    [String(prospectId), { reason: "e2e test reset" }]);
   await pool.query(`DELETE FROM messages WHERE prospect_id = $1 AND meta->>'test' = 'true'`, [prospectId]);
   return { restored: e.detail.original_email };
 }
