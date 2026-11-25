@@ -528,3 +528,12 @@ References are starting points, not a substitute for checking current provider r
 - Messaging policy example: https://www.twilio.com/en-us/legal/messaging-policy
 - Domain connection: https://www.entri.com/products/connect
 - Domain Connect: https://www.domainconnect.org/
+
+## Goal update (2026-11-25, owner)
+Target: 500 paying clients by end of April 2027 (about $115k MRR at ~$230 average). Rule: prove it first; spend scales only after the December pilot shows the real close rate.
+Ramp (assumes ~1 sale per 500 emails, to be replaced by pilot data):
+- Dec: pilot, ~2.5k emails, 5-10 clients. No new spend.
+- Jan: ~30 mailboxes, 4-5 niches, ~20k emails, ~40 clients. ~$400-600/mo.
+- Feb: ~60 mailboxes, ~10 niches, ~40k emails, ~80 clients.
+- Mar-Apr: ~100 mailboxes, 15+ niches, ~60-70k emails/mo, ~120-140 clients/mo. ~$1.5-2.5k/mo.
+Free work now: niche templates, preview variety + client logo/colors, follow-ups (drafts need approval), inbox placement checks, customer onboarding (domain connect, change requests, dashboard).
