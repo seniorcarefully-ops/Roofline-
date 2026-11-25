@@ -19,12 +19,12 @@ describe("per-niche offer page", () => {
   });
 });
 
-describe("persona photo", () => {
-  it("every niche shows Cole's headshot, never an old polaroid", async () => {
+describe("persona photo per niche", () => {
+  it("each niche shows only its own polaroid", async () => {
     const { leakDetection } = await import("../src/niches/leak_detection.js");
-    for (const h of [renderHomeV2(roofing.brand, "roofing", {}, roofing.offer), renderHomeV2(leakDetection.brand, "leak_detection", {}, leakDetection.offer)]) {
-      expect(h).toContain("/assets/persona/cole_headshot.jpg");
-      expect(h).not.toMatch(/\/assets\/persona\/(roofing|leak_detection)\.jpg/);
-    }
+    expect(renderHomeV2(roofing.brand, "roofing", {}, roofing.offer)).toContain('/assets/persona/roofing.jpg');
+    const leak = renderHomeV2(leakDetection.brand, "leak_detection", {}, leakDetection.offer);
+    expect(leak).not.toContain("/assets/persona/roofing.jpg");
+    expect(leak).toContain("/assets/persona/leak_detection.jpg");
   });
 });
