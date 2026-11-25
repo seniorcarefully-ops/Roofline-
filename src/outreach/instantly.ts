@@ -120,7 +120,7 @@ export async function testSend(pool: pg.Pool, prospectId: number, testEmail: str
   const email = renderEmailA({ firstName: p.contact_first_name, senderName: PERSONA.first, findings: g2.findings ?? g.findings!, codes: g2.codes ?? g.codes!,
     reviewCount: p.google_review_count, rating: p.google_rating == null ? null : Number(p.google_rating) });
   const body = email.body + emailFooterA(cfg.brand.postalAddress);
-  const name = "Roofline Websites · TEST (owner e2e)";
+  const name = `Roofline Websites · TEST (owner e2e) ${new Date().toISOString().slice(0, 16)}`;
   const found = await api("GET", `/api/v2/campaigns?search=${encodeURIComponent(name)}&limit=10`);
   let id = (found.items ?? []).find((c: any) => c.name === name)?.id;
   if (!id) id = (await api("POST", "/api/v2/campaigns", {
