@@ -283,3 +283,12 @@ describe("email version A", () => {
     expect(() => emailFooterA(null)).toThrow(/postal/);
   });
 });
+import { looksEnglish } from "../src/research/inspect.js";
+describe("language check", () => {
+  it("flags a non-English roofing page", () => {
+    const id = "Atap rumah lebih kokoh, aman, dan siap hadapi cuaca ekstrem. WeatherPro Roof menghadirkan layanan penggantian dan perbaikan atap rumah dengan pengerjaan rapi dan material berkualitas untuk rumah anda di seluruh kota dengan harga terjangkau dan garansi resmi dari kami untuk setiap proyek atap yang kami kerjakan bersama tim profesional.";
+    const en = "We are a family owned roofing company and we serve the whole area. Call us for a free estimate on your roof repair or replacement. Our team is licensed and insured, and we stand behind our work with a warranty that is easy to understand for you and your home or business in the city.";
+    expect(looksEnglish(id)).toBe(false);
+    expect(looksEnglish(en)).toBe(true);
+  });
+});

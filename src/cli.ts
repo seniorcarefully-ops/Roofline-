@@ -124,6 +124,10 @@ try {
       console.log("EXAMPLE " + JSON.stringify({ ...p, verdict: out.verdict, url: out.url, error: out.error }));
     }
   }
+  else if (cmd === "review-checks") {
+    const r = await pool.query(`SELECT r.verdict, r.checks FROM reviews r JOIN previews pv ON pv.id = r.preview_id WHERE pv.prospect_id = $1 ORDER BY r.id DESC LIMIT 1`, [Number(args[0])]);
+    console.log("CHECKS " + JSON.stringify(r.rows[0]?.checks?.filter((c: any) => !c.pass)));
+  }
   else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
   else if (cmd === "import-supersearch") console.log(await (await import("./research/supersearch.js")).importSupersearch(pool, args[0]!));
   else if (cmd === "supersearch-report") console.log(JSON.stringify(await (await import("./research/supersearch.js")).supersearchReport(pool)));

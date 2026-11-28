@@ -237,7 +237,7 @@ body{padding-bottom:84px}
 .L-split .hero>img{left:52%;width:48%;transform:none}
 .L-split .hero .wrap{grid-template-columns:1fr;padding-top:150px}.L-split .hero .wrap>div:first-child{max-width:46%}
 .L-split .hero .kicker{color:#fff;opacity:.85}.L-split .badge{position:absolute;left:calc(52% + 32px);bottom:48px}
-.L-split .hero h1{max-width:9ch}
+.L-split .hero h1{max-width:9ch}.L-split header{text-shadow:0 1px 8px rgba(0,0,0,.55)}
 /* Layout: classic (trust bar + centered hero) */
 .trust{display:none}
 .L-classic .trust{display:block;background:var(--night);color:#e5e7eb;font-size:14px}.L-classic .trust .wrap{display:flex;flex-wrap:wrap;gap:6px 22px;justify-content:center;padding:9px 24px}

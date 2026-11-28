@@ -33,6 +33,14 @@ export interface Expect { name: string; phone: string | null; domain: string | n
 
 const GENERIC = new Set(["roof","roofs","roofing","roofers","roofer","repair","repairs","llc","inc","co","company","the","and","of","services","service","construction","contractors","contractor","exteriors","exterior","home","homes","pros","pro","group","solutions","gutters","gutter","siding","windows","corp","&"]);
 
+/** Share of common English function words; US business sites are well above 4%. */
+export function looksEnglish(text: string): boolean {
+  const w = text.toLowerCase().match(/[a-z\u00c0-\u024f']+/g) ?? [];
+  if (w.length < 40) return true; // too little text to judge
+  const common = new Set(["the", "and", "to", "of", "a", "in", "for", "your", "we", "our", "you", "with", "is", "are", "on", "or", "us", "that", "it", "be"]);
+  return w.filter((x) => common.has(x)).length / w.length >= 0.04;
+}
+
 /** True only if the loaded page plausibly belongs to this business (name word, phone, or domain text). */
 export function pageMatchesBusiness(text: string, e: Expect): boolean {
   const t = text.toLowerCase();
@@ -147,8 +155,8 @@ async function inspectOne(url: string, outDir: string, browser?: Browser, expect
     const m: PageMetrics = await page.evaluate(`(${PAGE_METRICS})(${JSON.stringify(ESTIMATE.source)})`);
     // Never audit a page that isn't this business (parked domain, placeholder, other company).
     // A US roofer's site in another language is almost always hijacked or not theirs.
-    if (expect && m.lang && !/^en\b/i.test(m.lang) && !/\b(the|and|roof|call|contact)\b/i.test(m.pageText.slice(0, 3000)))
-      return { ok: false, finalUrl, error: `site_mismatch: page is not in English (${m.lang})`, findings: [] };
+    if (expect && !looksEnglish(m.pageText))
+      return { ok: false, finalUrl, error: `site_mismatch: page is not in English${m.lang ? ` (${m.lang})` : ""}`, findings: [] };
     if (expect && !pageMatchesBusiness(m.pageText, expect))
       return { ok: false, finalUrl, error: "site_mismatch: page does not show this business's name or phone", findings: [] };
 
