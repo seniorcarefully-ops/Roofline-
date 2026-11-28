@@ -27,7 +27,7 @@ export async function confirmedNoDns(hostname: string): Promise<boolean> {
 const ESTIMATE = /(free\s+)?(estimate|quote|inspection|bid)/i;
 
 interface PageMetrics { telCount: number; ctaCount: number; overflow: number; viewportMeta: boolean; links: string[];
-  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string; branding: Branding }
+  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string; branding: Branding; lang: string }
 
 export interface Expect { name: string; phone: string | null; domain: string | null }
 
@@ -79,7 +79,7 @@ const PAGE_METRICS = `function (estimateSrc) {
     smallTextRatio: total ? small / total : 0, textNodes: total,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
     viewportMeta: !!document.querySelector('meta[name="viewport"]'), links: links,
-    pageText: (document.title + "\\n" + text).slice(0, 50000), branding: branding() };
+    lang: document.documentElement.lang || "", pageText: (document.title + "\\n" + text).slice(0, 50000), branding: branding() };
   function branding() {
     var html = document.documentElement.outerHTML.slice(0, 400000).toLowerCase();
     var gen = ((document.querySelector('meta[name="generator"]') || {}).content || "").toLowerCase();
@@ -146,6 +146,9 @@ async function inspectOne(url: string, outDir: string, browser?: Browser, expect
 
     const m: PageMetrics = await page.evaluate(`(${PAGE_METRICS})(${JSON.stringify(ESTIMATE.source)})`);
     // Never audit a page that isn't this business (parked domain, placeholder, other company).
+    // A US roofer's site in another language is almost always hijacked or not theirs.
+    if (expect && m.lang && !/^en\b/i.test(m.lang) && !/\b(the|and|roof|call|contact)\b/i.test(m.pageText.slice(0, 3000)))
+      return { ok: false, finalUrl, error: `site_mismatch: page is not in English (${m.lang})`, findings: [] };
     if (expect && !pageMatchesBusiness(m.pageText, expect))
       return { ok: false, finalUrl, error: "site_mismatch: page does not show this business's name or phone", findings: [] };
 

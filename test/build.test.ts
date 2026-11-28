@@ -72,3 +72,10 @@ describe("branding", () => {
     expect(logoUsable(1600, 100, "image/jpeg", 90000)).toBe(false);
   });
 });
+describe("branding fixes", () => {
+  it("strips keyword stuffing and ignores default link blue", () => {
+    expect(displayName("Go Excel Construction : Roof Replacement Specialist")).toBe("Go Excel Construction");
+    expect(displayName("Acme Roofing | Best Roofer in Tacoma")).toBe("Acme Roofing");
+    expect(pickBrandColor(["rgb(0,0,238)", "rgb(0,0,238)", "rgb(0,0,238)"])).toBeNull();
+  });
+});

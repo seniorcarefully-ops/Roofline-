@@ -3,6 +3,8 @@
  * signal is weak we fall back to the standard design instead of guessing.
  */
 
+const DEFAULT_LINK = new Set(["#0000ee", "#551a8b", "#0000ff", "#1a0dab", "#0645ad"]);
+
 export interface RGB { r: number; g: number; b: number }
 
 export function parseColor(s: string): RGB | null {
@@ -40,7 +42,9 @@ export function pickBrandColor(samples: string[]): string | null {
     const c = parseColor(s); if (!c) continue;
     const { s: sat, l } = hsl(c);
     if (sat < 0.35 || l < 0.18 || l > 0.82) continue;
-    const k = hex(c); const e = counts.get(k) ?? { c, n: 0 }; e.n++; counts.set(k, e);
+    const k = hex(c);
+    if (DEFAULT_LINK.has(k)) continue; // browser default link colors are not branding
+    const e = counts.get(k) ?? { c, n: 0 }; e.n++; counts.set(k, e);
   }
   const best = [...counts.values()].sort((a, b) => b.n - a.n)[0];
   return best && best.n >= 2 ? hex(best.c) : null;
@@ -55,7 +59,9 @@ export function accentPalette(brandHex: string): { accent: string; accent2: stri
 
 /** Display name: drop legal suffixes and join spaced initials ("M G Wagner Co Inc Roofing" -> "MG Wagner Roofing"). */
 export function displayName(name: string): string {
-  let n = name.replace(/,?\s*\b(inc|llc|l\.l\.c|corp|corporation|ltd|pllc)\b\.?/gi, "").replace(/\s+/g, " ").trim();
+  // Google names often carry keyword stuffing after a separator: "Go Excel Construction : Roof Replacement Specialist".
+  let n = name.split(/\s+[:|\u2013\u2014-]\s+|\s*[:|]\s*/)[0]!.trim() || name;
+  n = n.replace(/,?\s*\b(inc|llc|l\.l\.c|corp|corporation|ltd|pllc)\b\.?/gi, "").replace(/\s+/g, " ").trim();
   n = n.replace(/\bco\b\.?(?=\s+(roofing|construction|exteriors)\b)/i, "").replace(/\s+/g, " ").trim();
   n = n.replace(/\b([A-Z])\s+(?=[A-Z]\b)/g, "$1");
   return n || name;
