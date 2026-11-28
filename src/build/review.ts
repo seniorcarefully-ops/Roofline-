@@ -66,7 +66,7 @@ export async function reviewPreview(htmlPath: string, brief: import("./brief.js"
         // Service words are allowed only when they appear in the verified services list.
         // Customer review text is excluded above: it is attributed to its author, not claimed by us.
         const lic = brief.license;
-        const verified = [brief.services.join(" "), lic ? "licensed" : "", lic?.bonded ? "bonded" : "", lic?.insured ? "insured" : ""]
+        const verified = [brief.services.join(" "), lic ? "licensed" : "", lic?.bonded ? "bonded" : "", lic?.insured ? "insured" : "", lic?.since ? `since ${lic.since}` : ""]
           .join(" ").toLowerCase();
         const bad = [...m.siteText.matchAll(new RegExp(UNSUPPORTED.source, "gi"))].map((x) => x[0])
           .find((w) => !verified.includes(w.toLowerCase()));
