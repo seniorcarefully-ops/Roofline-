@@ -6,7 +6,7 @@ import { mobileSpeedScore } from "./pagespeed.js";
 import { agencyCredit, logoUsable, pickBrandColor } from "../build/branding.js";
 
 /** Bump when checks change; prospects are re-audited under the new version. */
-export const AUDIT_VERSION = 11; // v10: English check by word frequency, stricter brand color
+export const AUDIT_VERSION = 12; // v12: whole-site check (up to 8 pages); missing = missing on every page // v10: English check by word frequency, stricter brand color
 export const _V7 = 7; // v7: page must show this business (blocks parked/placeholder pages)
 
 export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "data", "evidence");
@@ -56,7 +56,7 @@ export async function auditProspects(pool: pg.Pool, limit = 50, states: string[]
           [p.id, f.code, f.detail, f.sourceUrl, basename(f.evidencePath)]);
       await pool.query(
         `INSERT INTO events(subject_type, subject_id, track, actor, detail) VALUES ('prospect',$1,'audit','auditor',$2)`,
-        [String(p.id), { version: AUDIT_VERSION, ok: r.ok, error: r.error ?? null, finalUrl: r.finalUrl, findings: r.findings.map((f) => f.code) }]);
+        [String(p.id), { version: AUDIT_VERSION, ok: r.ok, error: r.error ?? null, finalUrl: r.finalUrl, findings: r.findings.map((f) => f.code), pages: r.pages ?? [] }]);
       const demote = async () => {
         if (p.prospect_state !== "qualified") return;
         await pool.query(`UPDATE prospects SET prospect_state='discovered', updated_at=now() WHERE id=$1`, [p.id]);

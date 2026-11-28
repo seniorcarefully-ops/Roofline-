@@ -4,7 +4,7 @@ import { chromium, devices, type Browser } from "playwright";
 
 export interface Finding { code: string; detail: string; sourceUrl: string; evidencePath: string }
 export interface Branding { builder: string | null; footer: string; footerLinks: string[]; colors: string[]; logo: { src: string; w: number; h: number } | null }
-export interface Inspection { ok: boolean; finalUrl: string | null; error?: string; findings: Finding[]; screenshot?: string; branding?: Branding }
+export interface Inspection { ok: boolean; finalUrl: string | null; error?: string; findings: Finding[]; screenshot?: string; branding?: Branding; pages?: string[] }
 
 /** Launch Chromium through the environment proxy when one is set, so DNS matches the public internet. */
 export function launchBrowser(): Promise<Browser> {
@@ -27,7 +27,7 @@ export async function confirmedNoDns(hostname: string): Promise<boolean> {
 const ESTIMATE = /(free\s+)?(estimate|quote|inspection|bid)/i;
 
 interface PageMetrics { telCount: number; ctaCount: number; overflow: number; viewportMeta: boolean; links: string[];
-  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string; branding: Branding; lang: string }
+  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string; branding: Branding; lang: string; formCount: number }
 
 export interface Expect { name: string; phone: string | null; domain: string | null }
 
@@ -87,7 +87,7 @@ const PAGE_METRICS = `function (estimateSrc) {
     smallTextRatio: total ? small / total : 0, textNodes: total,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
     viewportMeta: !!document.querySelector('meta[name="viewport"]'), links: links,
-    lang: document.documentElement.lang || "", pageText: (document.title + "\\n" + text).slice(0, 50000), branding: branding() };
+    lang: document.documentElement.lang || "", formCount: Array.from(document.querySelectorAll("form")).filter(function (f) { return visible(f) && f.querySelectorAll("input:not([type=hidden]),textarea").length >= 2; }).length, pageText: (document.title + "\\n" + text).slice(0, 50000), branding: branding() };
   function branding() {
     var html = document.documentElement.outerHTML.slice(0, 400000).toLowerCase();
     var gen = ((document.querySelector('meta[name="generator"]') || {}).content || "").toLowerCase();
@@ -160,25 +160,44 @@ async function inspectOne(url: string, outDir: string, browser?: Browser, expect
     if (expect && !pageMatchesBusiness(m.pageText, expect))
       return { ok: false, finalUrl, error: "site_mismatch: page does not show this business's name or phone", findings: [] };
 
-    if (m.telCount === 0) add("no_tap_to_call", "No tap-to-call (tel:) link found on the mobile homepage.");
-    if (m.ctaCount === 0) add("no_estimate_cta", "No visible button or link to request an estimate, quote, or inspection.", full);
-    if (m.overflow > 8 || !m.viewportMeta)
+    // Check the whole site, not just the homepage: a thing is "missing" only if no page has it.
+    const KEY = /(contact|estimate|quote|about|service|roof|review|testimonial|gallery|project|area|repair|replace)/i;
+    const sub = [...new Set(m.links.map((l) => l.split("#")[0]!))].filter((l) => l && l !== finalUrl && !/\.(pdf|jpe?g|png|gif|webp|zip)$/i.test(l))
+      .sort((a, b) => Number(KEY.test(b)) - Number(KEY.test(a))).slice(0, 7);
+    const pages: { url: string; m: PageMetrics }[] = [{ url: finalUrl, m }];
+    for (const url of sub) {
+      try {
+        const r = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+        if (!r || r.status() >= 400) continue;
+        await page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
+        if (new URL(page.url()).hostname.replace(/^www\./, "") !== new URL(finalUrl).hostname.replace(/^www\./, "")) continue;
+        pages.push({ url: page.url(), m: await page.evaluate(`(${PAGE_METRICS})(${JSON.stringify(ESTIMATE.source)})`) as PageMetrics });
+      } catch { /* skip pages that fail to load */ }
+    }
+    const n = pages.length, onN = n > 1 ? `any of the ${n} pages we checked` : "the homepage";
+    if (pages.every((p) => p.m.telCount === 0)) add("no_tap_to_call", `No tap-to-call (tel:) link on ${onN} on a phone.`);
+    if (pages.every((p) => p.m.ctaCount === 0 && p.m.formCount === 0))
+      add("no_estimate_cta", `No button, link or form to request an estimate, quote, or inspection on ${onN}.`, full);
+    const wide = pages.filter((p) => p.m.overflow > 8 || !p.m.viewportMeta);
+    if (wide.some((p) => p.url === finalUrl))
       add("mobile_overflow", m.viewportMeta
-        ? `Page is ${m.overflow}px wider than an iPhone screen, causing sideways scrolling.`
-        : "Page has no mobile viewport setting, so phones show a shrunken desktop layout.");
+        ? `Homepage is ${m.overflow}px wider than an iPhone screen, causing sideways scrolling${wide.length > 1 ? ` (${wide.length} of ${n} pages checked have this problem)` : ""}.`
+        : "Homepage has no mobile viewport setting, so phones show a shrunken desktop layout.");
 
     const year = new Date().getFullYear();
-    if (m.copyrightYear && m.copyrightYear <= year - 3)
-      add("stale_copyright", `Footer copyright says ${m.copyrightYear}, suggesting the site has not been updated in years.`, full);
-    if (!m.reviewsShown)
-      add("no_reviews_shown", "No customer reviews or testimonials appear on the homepage.", full);
+    const newest = Math.max(0, ...pages.map((p) => p.m.copyrightYear ?? 0));
+    if (newest && newest <= year - 3)
+      add("stale_copyright", `Footer copyright says ${newest}, suggesting the site has not been updated in years.`, full);
+    if (pages.every((p) => !p.m.reviewsShown))
+      add("no_reviews_shown", `No customer reviews or testimonials on ${onN}.`, full);
     if (m.textNodes >= 5 && m.smallTextRatio >= 0.4)
-      add("small_text", `${Math.round(m.smallTextRatio * 100)}% of text blocks are smaller than 12px on a phone, hard to read without zooming.`);
+      add("small_text", `${Math.round(m.smallTextRatio * 100)}% of text blocks on the homepage are smaller than 12px on a phone, hard to read without zooming.`);
     if (bytes > 6_000_000)
       add("heavy_page", `Homepage downloads ${(bytes / 1e6).toFixed(1)} MB, slow on mobile data.`);
 
     const broken: string[] = [];
-    for (const l of m.links) {
+    const allLinks = [...new Set(pages.flatMap((p) => p.m.links))].slice(0, 60);
+    for (const l of allLinks) {
       try {
         const r = await ctx.request.get(l, { timeout: 10000, maxRedirects: 5 });
         if (r.status() === 404 || r.status() === 410 || r.status() >= 500) broken.push(`${l} (${r.status()})`);
@@ -186,7 +205,7 @@ async function inspectOne(url: string, outDir: string, browser?: Browser, expect
     }
     if (broken.length) add("broken_links", `Broken links: ${broken.slice(0, 5).join(", ")}`);
 
-    return { ok: true, finalUrl, findings, screenshot: shot, branding: m.branding };
+    return { ok: true, finalUrl, findings, screenshot: shot, branding: m.branding, pages: pages.map((p) => p.url) };
   } finally {
     await ctx.close();
     if (own) await b.close();

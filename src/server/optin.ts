@@ -23,6 +23,7 @@ export interface OptinData {
   rating: number | null;
   reviews: number | null;
   hasThumb: boolean;
+  pagesChecked?: number;
 }
 
 /** Load everything the opt-in page shows, only for an approved preview. */
@@ -30,7 +31,8 @@ export async function loadOptin(pool: pg.Pool, token: string): Promise<OptinData
   const r = await pool.query(
     `SELECT pv.id, pv.prospect_id, pv.thumb IS NOT NULL AS has_thumb, p.business_name, p.contact_first_name, p.outreach_template,
             p.google_rating, p.google_review_count, p.prospect_state, v.config,
-            (SELECT verdict FROM reviews WHERE preview_id = pv.id ORDER BY id DESC LIMIT 1) AS verdict
+            (SELECT verdict FROM reviews WHERE preview_id = pv.id ORDER BY id DESC LIMIT 1) AS verdict,
+            (SELECT jsonb_array_length(COALESCE(e.detail->'pages','[]'::jsonb)) FROM events e WHERE e.subject_type='prospect' AND e.subject_id = p.id::text AND e.track='audit' ORDER BY e.id DESC LIMIT 1) AS pages
      FROM previews pv JOIN prospects p ON p.id = pv.prospect_id JOIN niche_versions v ON v.id = p.niche_version_id
      WHERE pv.token = $1`, [token]);
   const row = r.rows[0];
@@ -51,6 +53,7 @@ export async function loadOptin(pool: pg.Pool, token: string): Promise<OptinData
     rating: row.google_rating != null ? Number(row.google_rating) : null,
     reviews: row.google_review_count,
     hasThumb: row.has_thumb,
+    pagesChecked: row.pages ?? undefined,
   };
 }
 
@@ -72,7 +75,7 @@ export function renderOptin(d: OptinData, state: { error?: string; phone?: strin
   const audit = d.template === "website_audit" && d.findings.length
     ? `<section class="audit"><div class="wrap">
 <span class="kicker">The audit</span><h2>${d.findings.length} things your website is missing</h2>
-<p class="sub">I checked ${c}'s website on an iPhone, the way most homeowners find you. Here's what came up.</p>
+<p class="sub">I checked ${d.pagesChecked && d.pagesChecked > 1 ? `${d.pagesChecked} pages of ${c}'s website` : `${c}'s website`} on an iPhone, the way most homeowners find you. Here's what came up.</p>
 <div class="finds">${d.findings.map((f, i) => `<article class="find">
 ${f.image ? `<div class="shot"><img src="${f.image}" alt="Screenshot of the current ${c} website on a phone" loading="lazy"></div>` : ""}
 <div class="txt"><span class="num">0${i + 1}</span><h3>Missing ${esc(f.title)}</h3><p>${esc(f.detail)}</p><small>Checked ${esc(f.captured)}</small></div>
