@@ -51,10 +51,11 @@ export function pickBrandColor(samples: string[]): string | null {
 }
 
 /** Accent set that always reads well with white button text. */
-export function accentPalette(brandHex: string): { accent: string; accent2: string; tint: string } {
+export function accentPalette(brandHex: string): { accent: string; accent2: string; tint: string; light: string } {
   let c = parseColor(brandHex)!;
   for (let i = 0; i < 12 && contrastWithWhite(c) < 3.2; i++) c = mix(c, { r: 0, g: 0, b: 0 }, 0.1);
-  return { accent: hex(c), accent2: hex(mix(c, { r: 0, g: 0, b: 0 }, 0.14)), tint: hex(mix(c, { r: 255, g: 255, b: 255 }, 0.88)) };
+  return { accent: hex(c), accent2: hex(mix(c, { r: 0, g: 0, b: 0 }, 0.14)), tint: hex(mix(c, { r: 255, g: 255, b: 255 }, 0.9)),
+    light: hex(mix(c, { r: 255, g: 255, b: 255 }, 0.55)) };
 }
 
 /** Display name: drop legal suffixes and join spaced initials ("M G Wagner Co Inc Roofing" -> "MG Wagner Roofing"). */

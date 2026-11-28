@@ -110,6 +110,20 @@ try {
       console.log("EXAMPLE " + JSON.stringify({ ...p, verdict: out.verdict, url: out.url, error: out.error }));
     }
   }
+  else if (cmd === "rebuild") {
+    // Owner-requested rebuild of specific previews: re-audit, rescore, rebuild (new preview version).
+    const ids = args[0]!.split(",").map(Number);
+    console.log(JSON.stringify(await auditProspects(pool, ids.length, ["qualified"], ids)));
+    await (await import("./research/score.js")).scoreAll(pool);
+    for (const id of ids) {
+      const p = (await pool.query(`SELECT id, business_name, prospect_state, website_state, brand_color, site_builder, agency_credit FROM prospects WHERE id = $1`, [id])).rows[0];
+      if (p.prospect_state !== "qualified") { console.log("EXAMPLE " + JSON.stringify({ ...p, skipped: "no longer qualified" })); continue; }
+      await pool.query(`UPDATE prospects SET website_state = 'none', revision_count = 0 WHERE id = $1`, [id]);
+      await pool.query(`INSERT INTO events(subject_type, subject_id, track, to_state, actor, detail) VALUES ('prospect',$1,'website_state','none','owner_rebuild',$2)`, [String(id), { reason: "design update" }]);
+      const out: any = await buildAndReview(pool, id).catch((e) => ({ verdict: "error", error: String(e) }));
+      console.log("EXAMPLE " + JSON.stringify({ ...p, verdict: out.verdict, url: out.url, error: out.error }));
+    }
+  }
   else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
   else if (cmd === "import-supersearch") console.log(await (await import("./research/supersearch.js")).importSupersearch(pool, args[0]!));
   else if (cmd === "supersearch-report") console.log(JSON.stringify(await (await import("./research/supersearch.js")).supersearchReport(pool)));

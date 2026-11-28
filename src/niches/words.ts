@@ -6,6 +6,7 @@ export interface NicheWords {
   one: string; many: string; trade: string; person: string;
   site: {
     heroHeadline: string;           // preview-site hero
+    heroHeadlines?: string[];        // bank of general headlines (no claims); one is picked per business
     statLabel: string;              // e.g. "Local roofer"
     reachOut: string; takeLook: string; ctaHeadline: string; msgPlaceholder: string;
     defaultServices: string[];      // only what the Google category clearly implies
@@ -18,6 +19,9 @@ export const NICHE_WORDS: Record<string, NicheWords> = {
     one: "roofer", many: "roofers", trade: "roofing", person: "roofer",
     site: {
       heroHeadline: "A roof you don't have to think about.", statLabel: "Local roofer",
+      heroHeadlines: ["A roof you don't have to think about.", "Your roof, handled.", "Straight answers about your roof.",
+        "Roof trouble? Let's take a look.", "Local roofing, easy to reach.", "Protect what's under your roof.",
+        "Repairs, replacements and clear estimates.", "The roofer who picks up the phone."],
       reachOut: "send a request with a few details about your roof.", takeLook: "We'll talk through what you're seeing and what your roof needs.",
       ctaHeadline: "Let's talk about your roof.", msgPlaceholder: "What's going on with your roof?",
       defaultServices: ["Roof repair", "Roof replacement"],
@@ -29,6 +33,8 @@ export const NICHE_WORDS: Record<string, NicheWords> = {
     one: "leak detection company", many: "leak detection companies", trade: "leak detection", person: "leak detection tech",
     site: {
       heroHeadline: "Find the leak. Stop the damage.", statLabel: "Local leak detection",
+      heroHeadlines: ["Find the leak. Stop the damage.", "Leaks found fast, without tearing things apart.", "Water where it shouldn't be? Call us.",
+        "Straight answers about your leak.", "Local leak detection, easy to reach."],
       reachOut: "send a request with a few details about the leak.", takeLook: "We'll talk through what you're seeing and how to find the source.",
       ctaHeadline: "Let's find your leak.", msgPlaceholder: "What are you seeing? (water spot, high bill, sound of running water...)",
       defaultServices: ["Leak detection"],

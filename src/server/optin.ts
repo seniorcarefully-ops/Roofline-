@@ -1,3 +1,4 @@
+import { displayName } from "../build/branding.js";
 import type pg from "pg";
 import type { NicheConfig } from "../niches/schema.js";
 
@@ -56,8 +57,17 @@ export async function loadOptin(pool: pg.Pool, token: string): Promise<OptinData
 const nichePlural: Record<string, string> = { roofing: "roofers" };
 
 export function renderOptin(d: OptinData, state: { error?: string; phone?: string } = {}): string {
-  const c = esc(d.company);
-  const hi = d.firstName ? `Hi ${esc(d.firstName)},` : `Hi ${c} team,`;
+  const c = esc(displayName(d.company));
+  const hi = d.firstName ? `Hi ${esc(d.firstName)},` : `Hi there,`;
+  const smsLive = !!process.env.TWILIO_FROM_NUMBER;
+  const previewHref = `/p/${d.token}`;
+  const nowImg = d.findings.find((f) => f.image)?.image ?? null;
+  const compare = d.hasThumb && nowImg ? `<section class="vs"><div class="wrap">
+<span class="kicker">Side by side</span><h2>Your site today vs. the new one</h2>
+<div class="pair"><figure><div class="phone sm"><div class="scr"><img src="${nowImg}" alt="The current ${c} website on a phone"></div></div><figcaption>Your site today</figcaption></figure>
+<div class="arrow" aria-hidden="true">→</div>
+<figure><a href="${previewHref}" class="phone sm new"><div class="scr"><img src="/s/${d.token}/thumb.jpg" alt="The new ${c} website on a phone"></div></a><figcaption><b>Your new site</b> · <a href="${previewHref}">open it</a></figcaption></figure></div>
+</div></section>` : "";
   const who = nichePlural[d.niche] ?? "local businesses";
   const audit = d.template === "website_audit" && d.findings.length
     ? `<section class="audit"><div class="wrap">
@@ -96,7 +106,12 @@ h1,h2,h3{font-family:"Inter Tight",Inter,sans-serif;letter-spacing:-.025em;line-
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 24px;border-radius:999px;border:0;background:var(--accent);color:#fff;font:600 17px Inter,sans-serif;text-decoration:none;cursor:pointer}
 .phone{position:relative;justify-self:center;width:min(300px,78vw);aspect-ratio:9/18.5;border-radius:42px;background:#0b0f17;padding:12px;box-shadow:0 30px 70px rgba(0,0,0,.45),inset 0 0 0 2px #2a3240}
 .phone .scr{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#1b2533}
-.phone img{width:100%;height:100%;object-fit:cover;object-position:top;filter:blur(7px) saturate(1.1);transform:scale(1.08)}
+.phone{display:block}.phone img{width:100%;height:100%;object-fit:cover;object-position:top}
+.vs h2{font-size:clamp(30px,4.4vw,46px);margin:14px 0 30px}.pair{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap}
+.pair figure{margin:0;text-align:center}.pair figcaption{margin-top:14px;font-weight:600;color:var(--ink2)}
+.phone.sm{width:min(250px,40vw)}.phone.new{box-shadow:0 30px 70px rgba(0,0,0,.35),0 0 0 4px var(--accent)}
+.arrow{font:800 40px "Inter Tight",sans-serif;color:var(--accent)}.alt{background:var(--soft);border-radius:22px;padding:30px}.alt p{margin:14px 0 0;color:var(--ink2);text-align:center}
+@media (max-width:600px){.phone.sm{width:42vw;border-radius:26px;padding:7px}.phone.sm .scr{border-radius:20px}.pair{gap:10px;flex-wrap:nowrap}.arrow{font-size:26px}}
 .lock{position:absolute;inset:0;display:grid;place-content:center;gap:10px;text-align:center;color:#fff;background:linear-gradient(180deg,rgba(15,22,33,.15),rgba(15,22,33,.65));padding:20px}
 .lock b{font:800 22px/1.15 "Inter Tight",sans-serif}.lock span{font-size:14px;color:rgba(255,255,255,.85)}
 .lock i{width:48px;height:48px;border-radius:50%;background:var(--accent);display:grid;place-items:center;margin:0 auto}
@@ -129,24 +144,25 @@ footer{padding:30px 0 100px;text-align:center;color:var(--muted);font-size:13.5p
 <div class="hero"><div class="wrap"><div>
 <p class="hi">${hi}</p>
 <h1>I built ${c} a new website.</h1>
-<p>${d.template === "website_audit" ? "Below is a short audit of your current site, and the new one I built to fix it." : "It's built from your public business info and ready to see."} Enter your cell and I'll text you the link.</p>
-<a class="btn" href="#get">Text me the preview</a></div>
-<div class="phone"><div class="scr">${d.hasThumb ? `<img src="/s/${d.token}/thumb.jpg" alt="">` : ""}
-<div class="lock"><i><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></i><b>Your new site is ready</b><span>Enter your cell to see it</span></div></div></div>
+<p>${d.template === "website_audit" ? "Below is a short audit of your current site, and the new one I built to fix it." : "It's built from your public business info and ready to see."}</p>
+<a class="btn" href="${previewHref}">See your new website</a></div>
+<a class="phone" href="${previewHref}"><div class="scr">${d.hasThumb ? `<img class="clear" src="/s/${d.token}/thumb.jpg" alt="Your new website">` : ""}</div></a>
 </div></div>
+${compare}
 ${audit}
 <section class="cta" id="get"><div class="wrap"><div>
-<span class="kicker">See your new site</span><h2>Get the preview on your phone.</h2>
-<p>I'll text you the link in a few seconds. You can ask me anything about it by text. No obligation.</p>
+<span class="kicker">See your new site</span><h2>${smsLive ? "Get the preview on your phone." : "Your new site is ready."}</h2>
+<p>${smsLive ? "I'll text you the link in a few seconds. You can ask me anything about it by text. No obligation." : "Take a look. If you like it, it can go live on your domain. No obligation."}</p>
 <div class="me"><i>${esc(SENDER_NAME.slice(0, 1))}</i><span><b>${esc(SENDER_NAME)}, ${esc(d.brand.name)}</b><br>I build websites just for ${who}.</span></div></div>
-<form method="post" action="/s/${d.token}/optin">
+${smsLive ? "" : `<div class="alt"><a class="btn" href="${previewHref}" style="width:100%">See your new website</a><p>Questions? Just reply to my email.</p></div>`}
+${smsLive ? `<form method="post" action="/s/${d.token}/optin">
 ${state.error ? `<div class="err">${esc(state.error)}</div>` : ""}
 <label class="f" for="ph">Your cell number</label>
 <input id="ph" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(509) 555-0123" required value="${esc(state.phone ?? "")}">
 <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>${esc(consentText(d.brand.name))}</span></label>
 <button class="btn" type="submit">Text me the preview</button>
-</form></div></section>
+</form>` : ""}</div></section>
 <footer>${esc(d.brand.name)} · ${esc(d.brand.tagline)}<br>You're seeing this because we built a website preview for ${c}. Not interested? Just ignore it.</footer>
-<div class="sticky"><a class="btn" href="#get">Text me the preview</a></div>
+<div class="sticky"><a class="btn" href="${smsLive ? "#get" : previewHref}">${smsLive ? "Text me the preview" : "See your new website"}</a></div>
 </body></html>`;
 }
