@@ -41,7 +41,7 @@ export function pickBrandColor(samples: string[]): string | null {
   for (const s of samples) {
     const c = parseColor(s); if (!c) continue;
     const { s: sat, l } = hsl(c);
-    if (sat < 0.45 || l < 0.18 || l > 0.78) continue;
+    if (sat < 0.41 || l < 0.18 || l > 0.78) continue;
     const k = hex(c);
     if (DEFAULT_LINK.has(k)) continue; // browser default link colors are not branding
     const e = counts.get(k) ?? { c, n: 0 }; e.n++; counts.set(k, e);

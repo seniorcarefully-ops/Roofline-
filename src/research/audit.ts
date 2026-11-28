@@ -6,7 +6,7 @@ import { mobileSpeedScore } from "./pagespeed.js";
 import { agencyCredit, logoUsable, pickBrandColor } from "../build/branding.js";
 
 /** Bump when checks change; prospects are re-audited under the new version. */
-export const AUDIT_VERSION = 10; // v10: English check by word frequency, stricter brand color
+export const AUDIT_VERSION = 11; // v10: English check by word frequency, stricter brand color
 export const _V7 = 7; // v7: page must show this business (blocks parked/placeholder pages)
 
 export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "data", "evidence");
