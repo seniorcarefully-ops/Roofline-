@@ -219,9 +219,10 @@ body{padding-bottom:100px}
 #rl-bar{left:0;right:0;top:0;bottom:auto;border-radius:0;background:rgba(11,15,23,.92)}#rl-bar::before{inset:auto 0 0 0}
 #rl-bar .wrap{flex-direction:row;min-height:52px;gap:10px;padding:6px 8px 6px 14px}#rl-bar .tag,#rl-bar .t,#rl-bar .hide-sm{display:none}
 #rl-bar .p{font-size:13px;margin:0}#rl-bar .p b{font-size:15px}#rl-bar .btn{padding:10px 14px;font-size:14px}
-header{top:52px}.L-classic header{top:52px}.trust{margin-top:52px}
+header{top:52px}.L-classic header{top:52px!important}.trust{margin-top:52px}
 body{padding-bottom:84px}
-#call-now{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:45;padding:16px;font-size:17px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#call-now{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:45;padding:16px;font-size:17px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;transform:translateY(130%);pointer-events:none;transition:opacity .25s,transform .25s}
+#call-now.on{opacity:1;transform:none;pointer-events:auto}
 #rl-bar .nsm{display:none}.L-classic .trust .lic{display:none}.L-classic .trust{font-size:13px}
 .L-split header,.L-bold header{text-shadow:0 1px 8px rgba(0,0,0,.45)}}
 /* Layout: light */
@@ -312,7 +313,9 @@ ${reviewCards ? `<div class="revs">${reviewCards}</div>` : ""}
 </main>
 <footer><div class="wrap"><span>© ${new Date().getFullYear()} ${name}${lic ? ` · WA contractor license #${esc(lic.number)}` : ""}</span>${tel ? `<a href="${tel}">${phone}</a>` : ""}
 <span class="cr">Photos: ${credits.filter((p, i, a) => a.findIndex((q) => q.author === p.author) === i).map((p) => `<a href="${esc(p.authorUrl)}?utm_source=roofline&amp;utm_medium=referral" rel="noopener">${esc(p.author)}</a>`).join(", ")} on <a href="https://unsplash.com/?utm_source=roofline&amp;utm_medium=referral" rel="noopener">Unsplash</a></span></div></footer>
-${tel ? `<a id="call-now" class="btn" href="${tel}">${PHONE}Call now</a>` : ""}
+${tel ? `<a id="call-now" class="btn" href="${tel}" aria-hidden="true" tabindex="-1">${PHONE}Call now</a>
+<script>(function(){var b=document.getElementById("call-now"),c=document.querySelector(".hero .cta");if(!b||!c||!("IntersectionObserver" in window))return;
+new IntersectionObserver(function(e){var on=!e[0].isIntersecting;b.classList.toggle("on",on);b.setAttribute("aria-hidden",on?"false":"true");b.tabIndex=on?0:-1;}).observe(c);})();</script>` : ""}
 <div id="rl-fade" aria-hidden="true"></div>
 <aside id="rl-bar" aria-label="${esc(brand.name)} preview"><div class="wrap">
 <div><span class="tag">Preview · built for you</span><span class="t">This website is ready for ${name}.</span>
