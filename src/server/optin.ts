@@ -104,7 +104,7 @@ h1,h2,h3{font-family:"Inter Tight",Inter,sans-serif;letter-spacing:-.025em;line-
 .kicker{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 .kicker::before{content:"";width:24px;height:2px;background:currentColor}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 24px;border-radius:999px;border:0;background:var(--accent);color:#fff;font:600 17px Inter,sans-serif;text-decoration:none;cursor:pointer}
-.phone{position:relative;justify-self:center;width:min(300px,78vw);aspect-ratio:9/18.5;border-radius:42px;background:#0b0f17;padding:12px;box-shadow:0 30px 70px rgba(0,0,0,.45),inset 0 0 0 2px #2a3240}
+.phone{position:relative;justify-self:center;width:min(300px,78vw);aspect-ratio:390/688;border-radius:42px;background:#0b0f17;padding:12px;box-shadow:0 30px 70px rgba(0,0,0,.45),inset 0 0 0 2px #2a3240}
 .phone .scr{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#1b2533}
 .phone{display:block}.phone img{width:100%;height:100%;object-fit:cover;object-position:top}
 .vs h2{font-size:clamp(30px,4.4vw,46px);margin:14px 0 30px}.pair{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap}

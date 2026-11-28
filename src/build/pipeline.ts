@@ -55,7 +55,7 @@ export async function buildAndReview(pool: pg.Pool, prospectIdIn: number | strin
       try {
         const pg2 = await (await b.newContext({ ...devices["iPhone 13"], deviceScaleFactor: 1 })).newPage();
         await pg2.goto(pathToFileURL(out.path).href, { waitUntil: "networkidle", timeout: 20000 }).catch(() => {});
-        await pg2.addStyleTag({ content: "#rl-bar{display:none!important}" });
+        await pg2.addStyleTag({ content: "#rl-bar,#rl-fade{display:none!important}header{top:0!important}.trust{margin-top:0!important}" });
         const png = await pg2.screenshot({ type: "jpeg", quality: 60 }); // shown blurred; keep it light
         await pool.query(`UPDATE previews SET thumb = $2 WHERE id = $1`, [pv.rows[0].id, png]);
       } finally { await b.close(); }
