@@ -1,3 +1,4 @@
+import { displayName } from "./branding.js";
 import { pathToFileURL } from "node:url";
 import { devices, type Browser } from "playwright";
 import { launchBrowser } from "../research/inspect.js";
@@ -13,7 +14,7 @@ const UNSUPPORTED = /\b(repairs?|replacements?|inspections?|residential|commerci
  * Independent automated review of a rendered preview. Separate from the builder:
  * it only reads the output and the brief, and reports concrete failures.
  */
-export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchaseUrl: string, browser?: Browser): Promise<ReviewResult> {
+export async function reviewPreview(htmlPath: string, brief: import("./brief.js").BuildBriefInput, purchaseUrl: string, browser?: Browser): Promise<ReviewResult> {
   const own = !browser;
   const b = browser ?? (await launchBrowser());
   const checks: ReviewCheck[] = [];
@@ -40,7 +41,7 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       const m = await page.evaluate(`({
         overflow: document.documentElement.scrollWidth - window.innerWidth,
         title: document.title,
-        h1: (document.querySelector(".logo")||{}).innerText || "",
+        h1: ((document.querySelector(".logo")||{}).innerText || "") + " " + ((document.querySelector(".logo img")||{}).alt || ""),
         robots: (document.querySelector('meta[name=robots]')||{}).content || "",
         tels: Array.from(document.querySelectorAll('a[href^="tel:"]')).map(function(a){return a.getAttribute("href")}),
         imgsBroken: Array.from(document.images).filter(function(i){return !i.complete || i.naturalWidth===0}).map(function(i){return (i.currentSrc||i.src).slice(0,90)}),
@@ -55,7 +56,7 @@ export async function reviewPreview(htmlPath: string, brief: BuildBrief, purchas
       check(`${label}: purchase bar visible`, m.barVisible);
       check(`${label}: price shown`, m.priceVisible);
       if (label === "desktop") {
-        check("business name in title and header", m.title.includes(brief.businessName) && m.h1.includes(brief.businessName));
+        check("business name in title and header", m.title.includes(displayName(brief.businessName)) && m.h1.includes(displayName(brief.businessName)));
         check("noindex set", /noindex/.test(m.robots));
         check("no broken images", m.imgsBroken.length === 0, `${m.imgsBroken.length} broken: ${m.imgsBroken.join(" | ")}`);
         const telsOk = brief.phoneE164 ? m.tels.length > 0 && m.tels.every((t: string) => t === `tel:${brief.phoneE164}`) : m.tels.length === 0;

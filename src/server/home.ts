@@ -20,7 +20,7 @@ export const BRAND_PHONE = { display: "(509) 390-8200", e164: "+15093908200" };
 export function demoBrief(niche: string): BuildBrief {
   const w = words(niche);
   return {
-    prospectId: 0, version: 1, businessName: `Summit Ridge ${w.trade.replace(/\b\w/g, (c) => c.toUpperCase())} (Demo)`,
+    prospectId: 0, version: 1, branding: null, businessName: `Summit Ridge ${w.trade.replace(/\b\w/g, (c) => c.toUpperCase())} (Demo)`,
     phone: "(555) 010-0199", phoneE164: "+15550100199", city: "Your Town, USA", serviceArea: [],
     services: w.site.defaultServices, hours: null, rating: null, reviewCount: null,
     googleMapsUrl: null, placeId: null, license: null, servicesSource: "category", sources: ["demo"],

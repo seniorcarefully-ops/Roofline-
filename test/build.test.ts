@@ -46,3 +46,29 @@ describe("builder + reviewer", () => {
     expect((await reviewPreview(out.path, b2, buy)).verdict).toBe("approved");
   }, 30000);
 });
+
+import { accentPalette, agencyCredit, contrastWithWhite, displayName, logoUsable, parseColor, pickBrandColor } from "../src/build/branding.js";
+describe("branding", () => {
+  it("cleans legal suffixes from names", () => {
+    expect(displayName("M G Wagner Co Inc Roofing")).toBe("MG Wagner Roofing");
+    expect(displayName("Farha Roofing, LLC")).toBe("Farha Roofing");
+  });
+  it("picks a used, clearly colored brand color and ignores greys", () => {
+    expect(pickBrandColor(["rgb(255,255,255)", "rgb(30,30,30)", "rgb(200,30,40)", "rgb(200,30,40)", "rgb(120,120,120)"])).toBe("#c81e28");
+    expect(pickBrandColor(["rgb(255,255,255)", "rgb(0,0,0)", "rgb(200,30,40)"])).toBeNull();
+  });
+  it("always keeps white button text readable", () => {
+    const p = accentPalette("#ffd400");
+    expect(contrastWithWhite(parseColor(p.accent)!)).toBeGreaterThanOrEqual(3);
+  });
+  it("detects agency credits but not site builders", () => {
+    expect(agencyCredit("© 2024 Acme Roofing. Website by Hook Agency", [])).toMatch(/Hook Agency/);
+    expect(agencyCredit("© 2024 Acme Roofing. Powered by Wix", [])).toBeNull();
+    expect(agencyCredit("© 2024", ["https://www.scorpion.co/"])).toMatch(/scorpion/);
+  });
+  it("rejects tiny or odd-shaped logos", () => {
+    expect(logoUsable(300, 90, "image/png", 20000)).toBe(true);
+    expect(logoUsable(60, 20, "image/png", 2000)).toBe(false);
+    expect(logoUsable(1600, 100, "image/jpeg", 90000)).toBe(false);
+  });
+});

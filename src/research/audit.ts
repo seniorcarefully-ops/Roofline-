@@ -3,9 +3,11 @@ import { basename, join } from "node:path";
 import type pg from "pg";
 import { inspectSite, launchBrowser } from "./inspect.js";
 import { mobileSpeedScore } from "./pagespeed.js";
+import { agencyCredit, logoUsable, pickBrandColor } from "../build/branding.js";
 
 /** Bump when checks change; prospects are re-audited under the new version. */
-export const AUDIT_VERSION = 7; // v7: page must show this business (blocks parked/placeholder pages)
+export const AUDIT_VERSION = 8; // v8: branding + builder/agency signals
+export const _V7 = 7; // v7: page must show this business (blocks parked/placeholder pages)
 
 export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "data", "evidence");
 
@@ -14,11 +16,11 @@ export const EVIDENCE_DIR = process.env.EVIDENCE_DIR ?? join(process.cwd(), "dat
  * screenshot-backed checks are marked verified. Prospects with 3+ verified
  * findings move to qualified; unreachable sites go to the exception queue.
  */
-export async function auditProspects(pool: pg.Pool, limit = 50, states: string[] = ["discovered"]) {
+export async function auditProspects(pool: pg.Pool, limit = 50, states: string[] = ["discovered"], ids: number[] | null = null) {
   const ps = (await pool.query(
     `SELECT id, website_url, business_name, phone, normalized_domain, prospect_state FROM prospects WHERE prospect_state = ANY($3) AND website_url IS NOT NULL
        AND NOT EXISTS (SELECT 1 FROM events e WHERE e.subject_type='prospect' AND e.subject_id = prospects.id::text AND e.track='audit' AND (e.detail->>'version')::int = $2)
-     ORDER BY id LIMIT $1`, [limit, AUDIT_VERSION, states])).rows;
+     AND ($4::int[] IS NULL OR id = ANY($4)) ORDER BY id LIMIT $1`, [limit, AUDIT_VERSION, states, ids])).rows;
   const browser = await launchBrowser();
   const summary = { audited: 0, qualified: 0, unreachable: 0, belowThreshold: 0, demoted: 0 };
   try {
@@ -38,6 +40,7 @@ export async function auditProspects(pool: pg.Pool, limit = 50, states: string[]
           r.findings.push({ code: "slow_mobile", detail: `Google's PageSpeed test scores this site's mobile performance ${ps.score}/100${ps.lcp ? ` (main content takes ${ps.lcp} to appear)` : ""}.`,
             sourceUrl: r.finalUrl, evidencePath: r.screenshot });
       }
+      if (r.ok && r.branding) await saveBranding(pool, p.id, r.branding).catch((e) => console.error("branding failed:", e instanceof Error ? e.message : e));
       // Persist evidence images (keyed by file name) so the hosted audit page can show them.
       for (const path of new Set(r.findings.map((f) => f.evidencePath))) {
         const sz = await stat(path).then((x) => x.size).catch(() => 0);
@@ -76,4 +79,22 @@ export async function auditProspects(pool: pg.Pool, limit = 50, states: string[]
     }
   } finally { await browser.close(); }
   return summary;
+}
+
+/** Store site signals and branding from the business's own site. Weak signals are stored as null. */
+async function saveBranding(pool: pg.Pool, id: number, b: import("./inspect.js").Branding) {
+  const color = pickBrandColor(b.colors);
+  const agency = agencyCredit(b.footer, b.footerLinks);
+  let logo: Buffer | null = null, type: string | null = null;
+  if (b.logo && /^https?:/.test(b.logo.src)) {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const r = await fetch(b.logo.src, { signal: ctrl.signal });
+      const ct = (r.headers.get("content-type") ?? "").split(";")[0]!.trim().toLowerCase();
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (r.ok && logoUsable(b.logo.w, b.logo.h, ct, buf.length)) { logo = buf; type = ct; }
+    } catch { /* no logo */ } finally { clearTimeout(t); }
+  }
+  await pool.query(`UPDATE prospects SET site_builder = $2, agency_credit = $3, brand_color = $4, brand_logo = $5, brand_logo_type = $6 WHERE id = $1`,
+    [id, b.builder, agency, color, logo, type]);
 }

@@ -95,6 +95,21 @@ try {
     const out: any = await buildAndReview(pool, Number(r.rows[0].id));
     console.log(JSON.stringify({ business: r.rows[0].business_name, verdict: out.verdict, url: out.url, optin: out.url?.replace("/p/", "/s/"), failed: out.checks?.filter((c: any) => !c.pass) }));
   }
+  else if (cmd === "examples") {
+    // Re-audit (branding) and build previews for N qualified roofers that have no preview yet.
+    const n = Number(args[0] ?? 6);
+    const ids = (await pool.query(`SELECT p.id FROM prospects p JOIN niche_versions v ON v.id = p.niche_version_id
+      WHERE v.niche_id = 'roofing' AND p.prospect_state = 'qualified' AND p.website_state = 'none' AND p.place_id IS NOT NULL
+      ORDER BY p.fit_score DESC NULLS LAST, p.id LIMIT $1`, [n * 2])).rows.map((r) => Number(r.id));
+    console.log(JSON.stringify(await auditProspects(pool, ids.length, ["qualified"], ids)));
+    await (await import("./research/score.js")).scoreAll(pool);
+    const ok = (await pool.query(`SELECT id, business_name, site_builder, agency_credit, brand_color, brand_logo IS NOT NULL AS logo, fit_score FROM prospects
+      WHERE id = ANY($1) AND prospect_state = 'qualified' AND agency_credit IS NULL ORDER BY fit_score DESC LIMIT $2`, [ids, n])).rows;
+    for (const p of ok) {
+      const out: any = await buildAndReview(pool, Number(p.id)).catch((e) => ({ verdict: "error", error: String(e) }));
+      console.log("EXAMPLE " + JSON.stringify({ ...p, verdict: out.verdict, url: out.url, error: out.error }));
+    }
+  }
   else if (cmd === "daily") console.log(JSON.stringify(await (await import("./automation/daily.js")).runDaily(pool)));
   else if (cmd === "import-supersearch") console.log(await (await import("./research/supersearch.js")).importSupersearch(pool, args[0]!));
   else if (cmd === "supersearch-report") console.log(JSON.stringify(await (await import("./research/supersearch.js")).supersearchReport(pool)));

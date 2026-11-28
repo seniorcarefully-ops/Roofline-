@@ -44,6 +44,10 @@ export async function assembleBrief(db: Db, prospectId: number, version: number)
     rating: d.rating ?? null,
     reviewCount: d.userRatingCount ?? null,
     googleMapsUrl: d.googleMapsUri ?? null,
+    branding: (p.brand_color || p.brand_logo) ? {
+      accent: p.brand_color ?? null,
+      logoDataUri: p.brand_logo && p.brand_logo_type ? `data:${p.brand_logo_type};base64,${Buffer.from(p.brand_logo).toString("base64")}` : null,
+    } : null,
     sources: [d.googleMapsUri ?? `place:${p.place_id}`, ...(p.license_number ? [`wa-lni:${p.license_number}`] : [])],
   };
 }

@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { chromium, devices, type Browser } from "playwright";
 
 export interface Finding { code: string; detail: string; sourceUrl: string; evidencePath: string }
-export interface Inspection { ok: boolean; finalUrl: string | null; error?: string; findings: Finding[]; screenshot?: string }
+export interface Branding { builder: string | null; footer: string; footerLinks: string[]; colors: string[]; logo: { src: string; w: number; h: number } | null }
+export interface Inspection { ok: boolean; finalUrl: string | null; error?: string; findings: Finding[]; screenshot?: string; branding?: Branding }
 
 /** Launch Chromium through the environment proxy when one is set, so DNS matches the public internet. */
 export function launchBrowser(): Promise<Browser> {
@@ -26,7 +27,7 @@ export async function confirmedNoDns(hostname: string): Promise<boolean> {
 const ESTIMATE = /(free\s+)?(estimate|quote|inspection|bid)/i;
 
 interface PageMetrics { telCount: number; ctaCount: number; overflow: number; viewportMeta: boolean; links: string[];
-  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string }
+  copyrightYear: number | null; reviewsShown: boolean; smallTextRatio: number; textNodes: number; pageText: string; branding: Branding }
 
 export interface Expect { name: string; phone: string | null; domain: string | null }
 
@@ -78,7 +79,35 @@ const PAGE_METRICS = `function (estimateSrc) {
     smallTextRatio: total ? small / total : 0, textNodes: total,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
     viewportMeta: !!document.querySelector('meta[name="viewport"]'), links: links,
-    pageText: (document.title + "\\n" + text).slice(0, 50000) };
+    pageText: (document.title + "\\n" + text).slice(0, 50000), branding: branding() };
+  function branding() {
+    var html = document.documentElement.outerHTML.slice(0, 400000).toLowerCase();
+    var gen = ((document.querySelector('meta[name="generator"]') || {}).content || "").toLowerCase();
+    var builder = /wix/.test(gen) || html.indexOf("static.wixstatic.com") >= 0 ? "wix"
+      : /squarespace/.test(gen) || html.indexOf("squarespace") >= 0 ? "squarespace"
+      : html.indexOf("img1.wsimg.com") >= 0 || /godaddy|website builder/.test(gen) ? "godaddy"
+      : html.indexOf("weebly") >= 0 ? "weebly" : html.indexOf("site123") >= 0 ? "site123"
+      : /duda/.test(gen) || html.indexOf("multiscreensite") >= 0 || html.indexOf("dudaone") >= 0 ? "duda"
+      : /wordpress/.test(gen) || html.indexOf("wp-content") >= 0 ? "wordpress" : null;
+    var f = document.querySelector("footer") || document.body;
+    var footer = (f.innerText || "").slice(-1500);
+    var footerLinks = Array.from(f.querySelectorAll("a[href]")).map(function (a) { return a.href; }).filter(function (h) {
+      try { return new URL(h).hostname !== location.hostname && /^https?:/.test(h); } catch (e) { return false; } }).slice(0, 30);
+    var colors = [];
+    var tc = document.querySelector('meta[name="theme-color"]'); if (tc && tc.content) { colors.push(tc.content, tc.content); }
+    Array.from(document.querySelectorAll("header, nav, button, .btn, .button, a[class*=btn], a[class*=button], input[type=submit], [class*=cta]")).slice(0, 80).forEach(function (el) {
+      if (!visible(el)) return; var cs = getComputedStyle(el); colors.push(cs.backgroundColor); colors.push(cs.borderTopColor); });
+    Array.from(document.querySelectorAll("a, h1, h2, h3")).slice(0, 120).forEach(function (el) { if (visible(el)) colors.push(getComputedStyle(el).color); });
+    var logo = null, best = 0;
+    Array.from(document.images).forEach(function (im) {
+      var r = im.getBoundingClientRect(); if (!im.currentSrc && !im.src) return;
+      var key = ((im.currentSrc || im.src) + " " + im.alt + " " + im.className + " " + im.id + " " + ((im.parentElement && im.parentElement.className) || "")).toLowerCase();
+      var inHeader = !!im.closest("header, nav, [class*=header], [id*=header]");
+      var score = (key.indexOf("logo") >= 0 ? 3 : 0) + (inHeader ? 2 : 0) + (r.top < 250 ? 1 : 0);
+      if (score >= 3 && score > best && im.naturalWidth > 0) { best = score; logo = { src: im.currentSrc || im.src, w: im.naturalWidth, h: im.naturalHeight }; }
+    });
+    return { builder: builder, footer: footer, footerLinks: footerLinks, colors: colors, logo: logo };
+  }
 }`;
 
 /**
@@ -146,7 +175,7 @@ async function inspectOne(url: string, outDir: string, browser?: Browser, expect
     }
     if (broken.length) add("broken_links", `Broken links: ${broken.slice(0, 5).join(", ")}`);
 
-    return { ok: true, finalUrl, findings, screenshot: shot };
+    return { ok: true, finalUrl, findings, screenshot: shot, branding: m.branding };
   } finally {
     await ctx.close();
     if (own) await b.close();

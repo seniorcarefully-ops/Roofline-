@@ -21,5 +21,8 @@ export const BuildBrief = z.object({
   license: z.object({ number: z.string(), bonded: z.boolean().nullable(), insured: z.boolean().nullable(), since: z.number().int().nullable().default(null) }).nullable(),
   servicesSource: z.enum(["website", "category"]).nullable(), // category = Google says roofing_contractor
   sources: z.array(z.string()),            // URLs the facts came from
+  // From the business's own site, only when it passed quality checks (see build/branding.ts).
+  branding: z.object({ accent: z.string().regex(/^#[0-9a-f]{6}$/i).nullable(), logoDataUri: z.string().startsWith("data:image/").nullable() }).nullable().default(null),
 });
 export type BuildBrief = z.infer<typeof BuildBrief>;
+export type BuildBriefInput = z.input<typeof BuildBrief>;

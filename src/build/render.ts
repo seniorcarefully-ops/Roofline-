@@ -6,6 +6,7 @@ import { BuildBrief } from "./brief.js";
 import { photoUrl, pickPhoto, serviceTag, type Photo } from "./photos.js";
 import { MIN_RATING_FOR_REVIEWS, type LiveReviews } from "./reviews.js";
 import { words } from "../niches/words.js";
+import { accentPalette, displayName } from "./branding.js";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -27,11 +28,18 @@ export interface RenderOptions {
  * Photos come from the licensed Roofline library and are never captioned as the
  * roofer's own work. Preview safeguards: noindex, preview-only form, purchase bar.
  */
-export function renderRidge(input: BuildBrief, brand: NicheConfig["brand"], opts: RenderOptions): string {
+export function renderRidge(input: import("./brief.js").BuildBriefInput, brand: NicheConfig["brand"], opts: RenderOptions): string {
   const b = BuildBrief.parse(input);
   const niche = opts.niche ?? "roofing";
   const W = words(niche), T = W.trade[0]!.toUpperCase() + W.trade.slice(1);
-  const name = esc(b.businessName);
+  const shown = displayName(b.businessName);
+  const name = esc(shown);
+  const pal = b.branding?.accent ? accentPalette(b.branding.accent) : null;
+  const GENERIC = /^(roofing|roofers?|roof|construction|exteriors?|contracting|contractors?|company|services?|and|&|the|of|llc|inc|co)$/i;
+  const initials = (shown.split(/\s+/).filter((w) => !GENERIC.test(w))[0] ?? shown).replace(/[^A-Za-z0-9]/g, "").slice(0, 3).toUpperCase() || "R";
+  const logoHtml = b.branding?.logoDataUri
+    ? `<a class="logo has-img" href="#top"><img src="${esc(b.branding.logoDataUri)}" alt="${name}"></a>`
+    : `<a class="logo" href="#top"><i class="ini">${esc(initials)}</i><span>${name}</span></a>`;
   const tel = b.phoneE164 ? `tel:${b.phoneE164}` : null;
   const phone = esc(b.phone ?? "");
   const city = b.city ? esc(b.city) : null;
@@ -97,7 +105,7 @@ ${hero ? `<link rel="preload" as="image" href="${esc(photoUrl(hero, 1800, 1100))
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#0f1621;--ink2:#3b4452;--muted:#6b7380;--line:#e7e9ee;--soft:#f5f6f8;--night:#0f1621;--accent:#e2561b;--accent2:#c74813;--gold:#f6b13b;--r:20px}
+:root{--ink:#0f1621;--ink2:#3b4452;--muted:#6b7380;--line:#e7e9ee;--soft:#f5f6f8;--night:#0f1621;--accent:#e2561b;--tint:#fdebe2;--accent2:#c74813;--gold:#f6b13b;--r:20px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;font:16.5px/1.65 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:#fff;padding-bottom:72px;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}img{max-width:100%;display:block}
@@ -115,6 +123,8 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .logo i{flex:none;width:38px;height:38px;border-radius:11px;background:var(--accent);display:grid;place-items:center}
 .logo i svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .logo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logo i.ini{font:800 14px/1 "Inter Tight",Inter,sans-serif;color:#fff;letter-spacing:.02em}
+.logo.has-img img{height:44px;width:auto;max-width:210px;object-fit:contain;background:#fff;padding:6px 10px;border-radius:10px}
 nav{display:flex;gap:30px;font-size:15px;font-weight:500}nav a{color:rgba(255,255,255,.85);text-decoration:none}nav a:hover{color:#fff}
 header .btn{padding:12px 20px;font-size:15px}
 .hero{position:relative;min-height:min(860px,100svh);display:flex;align-items:flex-end;color:#fff;background:var(--night);overflow:hidden}
@@ -147,7 +157,7 @@ section{padding:112px 0}.soft{background:var(--soft)}
 .split h2{font-size:clamp(34px,4.4vw,54px);margin:16px 0 22px}
 .ticks{list-style:none;padding:0;margin:28px 0 36px;display:grid;gap:16px}
 .ticks li{display:flex;gap:14px;align-items:flex-start;font-size:17px;font-weight:500}
-.ticks svg{flex:none;width:26px;height:26px;padding:4px;border-radius:50%;background:#fdebe2;fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ticks svg{flex:none;width:26px;height:26px;padding:4px;border-radius:50%;background:var(--tint);fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .dark{background:var(--night);color:#fff}.dark .head p{color:rgba(255,255,255,.7)}
 .revs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
 .rev{margin:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:30px;display:flex;flex-direction:column;gap:18px}
@@ -200,10 +210,10 @@ body{padding-bottom:130px}
 .steps{grid-template-columns:1fr}section{padding:80px 0}.split{gap:36px}.split .ph{aspect-ratio:4/3}.final .wrap{gap:36px}}
 @media (max-width:520px){.wrap{padding:0 18px}.hero .wrap{padding-top:120px;padding-bottom:40px}.cta .btn{width:100%}header .btn{padding:10px 16px}
 .badge{display:none}.card{min-height:340px}#rl-bar{left:8px;right:8px;bottom:8px;border-radius:18px}#rl-bar .wrap{flex-direction:column;align-items:stretch;gap:12px;padding:14px}#rl-bar .t{font-size:16.5px}#rl-bar .hide-sm{display:none}#rl-bar .btn{width:100%;padding:16px}body{padding-bottom:190px}}
-</style></head>
+</style>${pal ? `<style>:root{--accent:${pal.accent};--accent2:${pal.accent2};--tint:${pal.tint}}</style>` : ""}</head>
 <body>
 <header><div class="wrap">
-<a class="logo" href="#top"><i><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M6 10.5V20h12v-9.5"/></svg></i><span>${name}</span></a>
+${logoHtml}
 <nav><a href="#services">Services</a><a href="#about">About</a>${showReviews ? `<a href="#reviews">Reviews</a>` : ""}<a href="#area">Service area</a><a href="#faq">FAQ</a></nav>
 ${tel ? `<a class="btn" href="${tel}">${PHONE}<span>Call</span></a>` : `<a class="btn" href="#estimate">Get an estimate</a>`}
 </div></header>
@@ -211,7 +221,7 @@ ${tel ? `<a class="btn" href="${tel}">${PHONE}<span>Call</span></a>` : `<a class
 <div class="hero">${img(hero, 1800, 1100, "", false)}<div class="wrap">
 <div><span class="kicker">${esc(T)}${cityShort ? ` · ${cityShort}` : ""}</span>
 <h1>${esc(W.site.heroHeadline)}</h1>
-<p>${name}${city ? ` works on homes in and around ${city}` : " works on homes in your area"}. Tell us what's going on and we'll take it from there.</p>
+<p>${name}${city ? ` serves customers in and around ${city}` : " serves customers in your area"}. Tell us what's going on and we'll take it from there.</p>
 <div class="cta">${tel ? `<a class="btn" href="${tel}">${PHONE}Call ${phone}</a>` : ""}<a class="btn line" href="#estimate">Request an estimate</a></div></div>
 ${showReviews ? `<div class="badge"><div class="big">${rating!.toFixed(1)} ${stars(rating!)}</div><p>From ${count} reviews on Google</p></div>` : ""}
 </div></div>
