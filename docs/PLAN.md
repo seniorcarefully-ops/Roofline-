@@ -537,3 +537,18 @@ Ramp (assumes ~1 sale per 500 emails, to be replaced by pilot data):
 - Feb: ~60 mailboxes, ~10 niches, ~40k emails, ~80 clients.
 - Mar-Apr: ~100 mailboxes, 15+ niches, ~60-70k emails/mo, ~120-140 clients/mo. ~$1.5-2.5k/mo.
 Free work now: niche templates, preview variety + client logo/colors, follow-ups (drafts need approval), inbox placement checks, customer onboarding (domain connect, change requests, dashboard).
+
+## Considering (not in the plan)
+Ideas under consideration only. Nothing here is scheduled, built, priced or promised to customers until the owner moves it into the plan.
+
+### AI sales agent for small roofers (2026-11-28)
+- What it would do: answer every inbound lead instantly (text, web form, missed call), qualify and book inspections; follow up on estimates that didn't close (day 2/7/21); win back past customers (post-storm check-ins, inspection reminders, review requests).
+- What it would not do: cold call or cold text homeowners. TCPA requires prior consent for automated/AI-voice calls and texts (FCC 2024: AI voices count). Only people who contacted the roofer or are existing customers.
+- Pricing idea: pay per booked inspection (about $75-150, verifiable on the calendar) plus a small base. A % of closed jobs is hard to verify, invites disputes, pays late, and may be regulated in some states (check before any % pricing).
+- Prerequisites: texting live (A2P approved), calendar booking, access to the roofer's estimates, real customers to test with.
+- Possible path: free trial with a few happy customers after the site is proven, measure inspections booked and jobs won, then decide.
+
+### Instant roof estimates on customer sites (2026-11-28)
+- Homeowner enters an address and gets a roof size and price range; contact details required for the exact quote. Roof data from Google Solar API (cents per lookup; check pricing); roofer sets their price per square; always shown as a range, labeled as an estimate.
+- Caveats: about 5-10% accuracy on simple roofs, worse on complex or tree-covered ones; some rural addresses have no data.
+- Possible add-on around $100/month. First step if pursued: a 50-address coverage and accuracy test.
